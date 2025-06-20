@@ -212,36 +212,129 @@
             font-family: monospace;
             transition: all 0.3s ease;
         }
+          .array-item.default { 
+            background-color: rgba(96, 165, 250, 0.7); 
+            box-shadow: 0 2px 4px rgba(96, 165, 250, 0.3);
+            transition: all 0.3s ease;
+        }
         
-        .array-item.default { background-color: rgba(96, 165, 250, 0.7); box-shadow: 0 2px 4px rgba(96, 165, 250, 0.3); }        .array-item.comparing { 
+        .array-item.comparing { 
             background-color: rgba(248, 113, 113, 0.9);
             transform: translateY(-4px);
             box-shadow: 0 4px 8px rgba(248, 113, 113, 0.4);
-        }        .array-item.swapped { 
+            border: 2px solid rgba(248, 113, 113, 0.8);
+        }
+        
+        .array-item.swapped { 
             background-color: rgba(250, 204, 21, 0.9);
             transform: translateY(-2px) scale(1.1);
             box-shadow: 0 4px 8px rgba(250, 204, 21, 0.4);
-        }        .array-item.pivot { 
+            border: 2px solid rgba(250, 204, 21, 0.8);
+        }
+        
+        .array-item.pivot { 
             background-color: rgba(129, 140, 248, 0.9);
             box-shadow: 0 4px 8px rgba(129, 140, 248, 0.4);
-        }.array-item.sorted { 
+            border: 3px solid rgba(129, 140, 248, 1);
+            transform: scale(1.05);
+        }
+        
+        .array-item.sorted { 
             background-color: rgba(74, 222, 128, 0.9);
             box-shadow: 0 4px 8px rgba(74, 222, 128, 0.4);
-        }        .array-item.min { 
+            border: 2px solid rgba(74, 222, 128, 0.6);
+        }
+        
+        .array-item.min { 
             background-color: rgba(167, 139, 250, 0.9);
             box-shadow: 0 4px 8px rgba(167, 139, 250, 0.4);
-        }        .array-item.key { 
+            border: 2px solid rgba(167, 139, 250, 0.8);
+            transform: scale(1.03);
+        }
+        
+        .array-item.key { 
             background-color: rgba(251, 146, 60, 0.9);
             box-shadow: 0 4px 8px rgba(251, 146, 60, 0.4);
-        }        .array-item.merged { 
+            border: 2px solid rgba(251, 146, 60, 0.8);
+            transform: scale(1.03);
+        }
+        
+        .array-item.merged { 
             background-color: rgba(52, 211, 153, 0.9);
             animation: fadeIn 0.5s;
             box-shadow: 0 4px 8px rgba(52, 211, 153, 0.4);
+            border: 2px solid rgba(52, 211, 153, 0.6);
         }
-        
-        @keyframes fadeIn {
+          @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.8); }
             to { opacity: 1; transform: scale(1); }
+        }
+        
+        /* 향상된 애니메이션 효과들 */
+        @keyframes pulse {
+            0% { 
+                transform: translateY(-4px) scale(1); 
+                box-shadow: 0 4px 8px rgba(248, 113, 113, 0.4);
+            }
+            100% { 
+                transform: translateY(-6px) scale(1.05); 
+                box-shadow: 0 6px 12px rgba(248, 113, 113, 0.6);
+            }
+        }
+        
+        @keyframes bounce {
+            0% { 
+                transform: translateY(-2px) scale(1.1); 
+            }
+            25% { 
+                transform: translateY(-8px) scale(1.15); 
+            }
+            50% { 
+                transform: translateY(-2px) scale(1.1); 
+            }
+            75% { 
+                transform: translateY(-4px) scale(1.12); 
+            }
+            100% { 
+                transform: translateY(-2px) scale(1.1); 
+            }
+        }
+        
+        @keyframes glow {
+            0% { 
+                box-shadow: 0 4px 8px rgba(129, 140, 248, 0.4);
+                transform: scale(1);
+            }
+            100% { 
+                box-shadow: 0 6px 16px rgba(129, 140, 248, 0.8), 0 0 20px rgba(129, 140, 248, 0.4);
+                transform: scale(1.02);
+            }
+        }
+        
+        @keyframes fadeInScale {
+            0% { 
+                opacity: 0; 
+                transform: scale(0.8); 
+            }
+            50% { 
+                opacity: 0.7; 
+                transform: scale(1.1); 
+            }
+            100% { 
+                opacity: 1; 
+                transform: scale(1); 
+            }
+        }
+        
+        @keyframes staggeredEntry {
+            0% { 
+                opacity: 0; 
+                transform: translateY(10px) scale(0.9); 
+            }
+            100% { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
         }
           #vega-vis {
             width: 100%;
@@ -658,14 +751,14 @@
                         // 크기 계산 (값에 비례, 상태에 따라 다름)
                         const baseSize = 16; // 기본 크기 약간 줄임
                         const valueSize = (d.value / dataset.length) * 20;
-                        
-                        // 상태별 크기 배율 - 약간 차별화
+                          // 상태별 크기 배율 - 더욱 역동적으로 강화
                         const stateMultiplier = 
-                            d.state === 'comparing' ? 1.35 : 
-                            d.state === 'swapped' ? 1.25 : 
-                            d.state === 'pivot' ? 1.5 : 
-                            d.state === 'key' ? 1.4 :
-                            d.state === 'min' ? 1.35 : 1.0;
+                            d.state === 'comparing' ? 1.5 : 
+                            d.state === 'swapped' ? 1.4 : 
+                            d.state === 'pivot' ? 1.7 : 
+                            d.state === 'key' ? 1.45 :
+                            d.state === 'min' ? 1.4 : 
+                            d.state === 'sorted' ? 1.1 : 1.0;
                             
                         const size = (baseSize + valueSize) * stateMultiplier;
                         
@@ -803,8 +896,12 @@
                                         "fill": {"field": "fill"},
                                         "fillOpacity": {"field": "opacity"},
                                         "stroke": {"field": "stroke"},
-                                        "strokeOpacity": {"value": 0.9},
-                                        "strokeWidth": {"field": "strokeWidth"}
+                                        "strokeOpacity": {
+                                            "signal": "datum.state === 'comparing' || datum.state === 'swapped' || datum.state === 'pivot' ? 1.0 : 0.9"
+                                        },
+                                        "strokeWidth": {
+                                            "signal": "datum.state === 'comparing' ? 3 : datum.state === 'pivot' ? 4 : datum.strokeWidth"
+                                        }
                                     }
                                 }
                             },
@@ -819,7 +916,31 @@
                                     },
                                     "update": {
                                         "fill": {"field": "fill"},
-                                        "fillOpacity": {"value": 0.2},
+                                        "fillOpacity": {
+                                            "signal": "datum.glow ? 0.3 : 0.2"
+                                        },
+                                        "stroke": {"value": "none"}
+                                    }
+                                }
+                            },
+                            {
+                                "type": "symbol",
+                                "from": {"data": "planets"},
+                                "transform": [
+                                    {
+                                        "type": "filter",
+                                        "expr": "datum.state === 'comparing' || datum.state === 'swapped' || datum.state === 'pivot'"
+                                    }
+                                ],
+                                "encode": {
+                                    "enter": {
+                                        "x": {"field": "x"},
+                                        "y": {"field": "y"},
+                                        "size": {"field": "size", "mult": 25}
+                                    },
+                                    "update": {
+                                        "fill": {"field": "fill"},
+                                        "fillOpacity": {"value": 0.15},
                                         "stroke": {"value": "none"}
                                     }
                                 }
@@ -849,8 +970,7 @@
                         ]
                     };
                 }, [algorithm]);
-                
-                // Vega 시각화 렌더링
+                  // Vega 시각화 렌더링 (애니메이션 개선)
                 useEffect(() => {
                     if (!data || data.length === 0 || !containerRef.current) return;
                     
@@ -862,67 +982,123 @@
                         existingArray.remove();
                     }
                     
-                    // Vega 시각화 렌더링
+                    // Vega 시각화 렌더링 (부드러운 애니메이션을 위한 설정)
                     vegaEmbed('#vega-vis', vegaSpec, {
                         actions: false,
-                        renderer: 'canvas'
+                        renderer: 'canvas',
+                        tooltip: false,
+                        patch: (spec) => {
+                            // 애니메이션 지연시간 설정
+                            if (spec.marks) {
+                                spec.marks.forEach(mark => {
+                                    if (mark.type === 'symbol' && mark.from && mark.from.data === 'planets') {
+                                        mark.encode.update = {
+                                            ...mark.encode.update,
+                                            // 부드러운 트랜지션 효과
+                                            x: { field: 'x', transition: { duration: 300, ease: 'cubic-in-out' } },
+                                            y: { field: 'y', transition: { duration: 300, ease: 'cubic-in-out' } },
+                                            size: { field: 'size', mult: mark.encode.enter.size.mult, transition: { duration: 200, ease: 'quad-out' } },
+                                            fill: { field: 'fill', transition: { duration: 150, ease: 'linear' } },
+                                            fillOpacity: { field: 'opacity', transition: { duration: 150, ease: 'linear' } }
+                                        };
+                                    }
+                                });
+                            }
+                            return spec;
+                        }
                     }).then(result => {
                         vegaRef.current = result;
+                        
+                        // 특수 효과: 정렬 완료시 반짝임 효과
+                        const allSorted = data.every(d => d.state === 'sorted');
+                        if (allSorted && vegaRef.current) {
+                            setTimeout(() => {
+                                const view = vegaRef.current.view;
+                                // 완료 효과를 위한 임시 글로우 추가
+                                view.signal('completionGlow', true);
+                                view.runAsync();
+                                setTimeout(() => {
+                                    view.signal('completionGlow', false);
+                                    view.runAsync();
+                                }, 1000);
+                            }, 500);
+                        }
                     }).catch(console.error);
                     
-                    // 배열 시각화
+                    // 배열 시각화 (애니메이션 강화)
                     const containerEl = containerRef.current;
                     const arrayContainer = document.createElement("div");
                     arrayContainer.className = "array-container";
                     
                     arrayContainer.innerHTML = '';
-                    data.forEach(item => {
+                    data.forEach((item, index) => {
                         const arrayItem = document.createElement("div");
                         arrayItem.className = `array-item ${item.state || 'default'}`;
                         arrayItem.textContent = item.value;
+                        
+                        // 강화된 상태별 애니메이션 효과
+                        if (item.state === 'comparing') {
+                            arrayItem.style.animation = 'pulse 0.8s infinite alternate';
+                        } else if (item.state === 'swapped') {
+                            arrayItem.style.animation = 'bounce 0.6s ease-out';
+                        } else if (item.state === 'pivot') {
+                            arrayItem.style.animation = 'glow 1.5s infinite alternate';
+                        } else if (item.state === 'sorted') {
+                            arrayItem.style.animation = 'fadeInScale 0.5s ease-out';
+                        }
+                        
+                        // 순차적 등장 효과 (처음 로드시)
+                        if (data.every(d => d.state === 'default')) {
+                            arrayItem.style.animationDelay = `${index * 50}ms`;
+                        }
+                        
                         arrayContainer.appendChild(arrayItem);
                     });
                     
                     containerEl.appendChild(arrayContainer);
-                }, [data, createVegaSpec]);                return (
+                }, [data, createVegaSpec]);return (
                     <div ref={containerRef} className="vis-container">
                         <div id="vega-vis"></div>
                     </div>
                 );
             };
-            
-            // 정보 카드 컴포넌트
+              // 정보 카드 컴포넌트 (애니메이션 상태 정보 강화)
             const InfoCard = ({ algo, time, isSorting }) => {
                 const INFO_CONTENT = {
                     bubble: { 
                         title: '중력파 정렬 (버블)', 
                         concept: '이웃한 두 행성을 비교하여 질량(값)이 잘못되었을 경우 서로의 궤도를 바꿉니다. 이 과정이 반복되며 가장 무거운 행성이 바깥 궤도로 밀려납니다.', 
                         bigO: 'O(n²)', 
-                        features: '구현이 가장 단순하지만, 데이터가 많아질수록 비효율적입니다.' 
+                        features: '구현이 가장 단순하지만, 데이터가 많아질수록 비효율적입니다.',
+                        animation: '이웃 행성들이 비교되며 점차 가장 무거운 행성이 바깥 궤도로 이동합니다.'
                     },
                     selection: { 
                         title: '항성 형성 (선택)', 
                         concept: '성운 전체에서 가장 무거운 행성을 찾아 가장 바깥 궤도에 고정시킵니다. 이 과정을 반복하며 안쪽으로 궤도를 채워나갑니다.', 
                         bigO: 'O(n²)', 
-                        features: '데이터 이동이 적지만, 버블 정렬처럼 비효율적입니다.' 
+                        features: '데이터 이동이 적지만, 버블 정렬처럼 비효율적입니다.',
+                        animation: '최솟값 행성이 발광하며 찾아진 후 올바른 궤도로 이동합니다.'
                     },
                     insertion: { 
                         title: '궤도 동기화 (삽입)', 
                         concept: '하나의 행성을 선택해, 이미 정렬된 안쪽 궤도의 행성들과 비교하며 자신의 올바른 궤도를 찾아 삽입됩니다.', 
                         bigO: 'O(n²) / 최선: O(n)', 
-                        features: '데이터가 거의 정렬된 상태에서 매우 효율적으로 작동합니다.' 
+                        features: '데이터가 거의 정렬된 상태에서 매우 효율적으로 작동합니다.',
+                        animation: '키 행성이 이미 정렬된 궤도들과 비교하며 적절한 위치를 찾습니다.'
                     },
                     merge: { 
                         title: '성운 병합 (합병)', 
                         concept: '성운을 계속 절반으로 나누어 최소 단위(행성 하나)로 분해한 뒤, 다시 두 성운씩 질량 순서에 맞게 병합하며 전체를 정렬합니다.', 
                         bigO: 'O(n log n)', 
-                        features: '안정적이고 항상 일정한 성능을 보장하는 강력한 정렬 방식입니다.' 
+                        features: '안정적이고 항상 일정한 성능을 보장하는 강력한 정렬 방식입니다.',
+                        animation: '행성들이 분할되고 병합되며 질서정연하게 정렬됩니다.'
                     },
                     quick: { 
                         title: '퀘이사 피벗 (퀵)', 
                         concept: '성운에서 임의의 기준 행성(피벗)을 선택하고, 그보다 가벼운 행성들은 안쪽, 무거운 행성들은 바깥쪽으로 재배치합니다. 이 과정을 분할된 각 영역에서 반복합니다.', 
                         bigO: 'O(n log n) / 최악: O(n²)', 
-                        features: '평균적으로 매우 빠르지만, 기준 행성 선택에 따라 성능이 크게 달라질 수 있습니다.' 
+                        features: '평균적으로 매우 빠르지만, 기준 행성 선택에 따라 성능이 크게 달라질 수 있습니다.',
+                        animation: '피벗 행성이 강력하게 발광하며 다른 행성들이 양쪽으로 분할됩니다.'
                     }
                 };
                 
@@ -932,7 +1108,14 @@
                         <h2 className="info-title">
                             {content.title}
                             {isSorting && (
-                                <span style={{fontSize: '0.8rem', color: 'var(--accent-yellow)'}}>
+                                <span style={{fontSize: '0.8rem', color: 'var(--accent-yellow)', display: 'flex', alignItems: 'center', gap: '0.3rem'}}>
+                                    <div style={{
+                                        width: '6px', 
+                                        height: '6px', 
+                                        borderRadius: '50%', 
+                                        backgroundColor: 'var(--accent-yellow)',
+                                        animation: 'pulse 1s infinite'
+                                    }}></div>
                                     조율 중
                                 </span>
                             )}
@@ -946,6 +1129,8 @@
                             <p className="info-text">{content.concept}</p>
                             <h3 className="info-heading">시간 복잡도</h3>
                             <p className="info-text" style={{fontFamily: 'monospace'}}>{content.bigO}</p>
+                            <h3 className="info-heading">애니메이션 효과</h3>
+                            <p className="info-text">{content.animation}</p>
                             <h3 className="info-heading">특징</h3>
                             <p className="info-text">{content.features}</p>
                         </div>
@@ -1010,8 +1195,7 @@
                     setTime(0);
                     setData(generateNewData());
                 };
-                
-                const handleStartStop = () => {
+                  const handleStartStop = () => {
                     if (isSorting) {
                         stopSorting();
                     } else {
@@ -1023,6 +1207,10 @@
                     clearAnimationFrame();
                     setIsSorting(true);
                     
+                    // 시작 효과: 모든 행성을 기본 상태로 초기화
+                    const initialData = data.map(d => ({ ...d, state: 'default' }));
+                    setData(initialData);
+                    
                     try {
                         generatorRef.current = sortGenerators[algorithm]([...data]);
                         startTimeRef.current = performance.now();
@@ -1031,26 +1219,54 @@
                             setTime((performance.now() - startTimeRef.current) / 1000);
                         }, 10);
                         
-                        const animate = () => {
-                            try {
-                                const result = generatorRef.current.next();
-                                
-                                if (!result.done) {
-                                    setData(result.value);
-                                    animationRef.current = setTimeout(animate, speed);
-                                } else {
-                                    setData(result.value);
+                        // 시작 지연 효과 (행성들이 준비되는 시간)
+                        setTimeout(() => {
+                            const animate = () => {
+                                try {
+                                    const result = generatorRef.current.next();
+                                    
+                                    if (!result.done) {
+                                        setData(result.value);
+                                        
+                                        // 적응형 속도: 비교/교환 상태일 때 조금 더 느리게
+                                        const hasActiveStates = result.value.some(d => 
+                                            d.state === 'comparing' || d.state === 'swapped' || d.state === 'pivot'
+                                        );
+                                        const adaptiveSpeed = hasActiveStates ? speed * 1.3 : speed;
+                                        
+                                        animationRef.current = setTimeout(animate, adaptiveSpeed);
+                                    } else {
+                                        // 완료 효과: 순차적으로 정렬됨 상태로 변경
+                                        const finalData = result.value;
+                                        let completionIndex = 0;
+                                        
+                                        const completeAnimation = () => {
+                                            if (completionIndex < finalData.length) {
+                                                const updatedData = finalData.map((d, i) => ({
+                                                    ...d,
+                                                    state: i <= completionIndex ? 'sorted' : d.state
+                                                }));
+                                                setData(updatedData);
+                                                completionIndex++;
+                                                setTimeout(completeAnimation, 100);
+                                            } else {
+                                                clearAnimationFrame();
+                                                setIsSorting(false);
+                                            }
+                                        };
+                                        
+                                        setTimeout(completeAnimation, 300);
+                                    }
+                                } catch (error) {
+                                    console.error('애니메이션 오류:', error);
                                     clearAnimationFrame();
                                     setIsSorting(false);
                                 }
-                            } catch (error) {
-                                console.error('애니메이션 오류:', error);
-                                clearAnimationFrame();
-                                setIsSorting(false);
-                            }
-                        };
+                            };
+                            
+                            animate();
+                        }, 500); // 시작 지연
                         
-                        animate();
                     } catch (error) {
                         console.error('정렬 시작 오류:', error);
                         clearAnimationFrame();

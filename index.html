@@ -90,12 +90,6 @@
             color: #d1d5db;
         }
         
-        .algo-button:disabled {
-            background-color: #4b5563;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-        
         .algo-button.active {
             background-color: #4f46e5;
             color: white;
@@ -177,8 +171,16 @@
             padding: 0.75rem 2rem;
         }
         
-        .primary-button:hover:not(:disabled) {
+        .primary-button:hover {
             background-color: #4338ca;
+        }
+        
+        .primary-button.running {
+            background-color: #e53e3e;
+        }
+        
+        .primary-button.running:hover {
+            background-color: #c53030;
         }
         
         .secondary-button {
@@ -187,7 +189,7 @@
             padding: 0.75rem 2rem;
         }
         
-        .secondary-button:hover:not(:disabled) {
+        .secondary-button:hover {
             background-color: #6b7280;
         }
         
@@ -211,6 +213,18 @@
             max-width: 300px;
             z-index: 1000;
             display: none;
+        }
+        
+        /* 상태 뱃지 */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            background-color: #4f46e5;
+            color: white;
         }
     </style>
 </head>
@@ -433,11 +447,14 @@
             };
             
             // 정보 카드 컴포넌트
-            const InfoCard = ({ algo, time }) => {
+            const InfoCard = ({ algo, time, isSorting }) => {
                 const content = infoContent[algo];
                 return (
                     <div className="info-card-wrapper">
-                        <h2 className="info-title">{content.title}</h2>
+                        <h2 className="info-title">
+                            {content.title}
+                            {isSorting && <span className="status-badge">정렬 중</span>}
+                        </h2>
                         <div className="info-timer">걸린 시간: <span className="info-timer-value">{time.toFixed(2)} 초</span></div>
                         <div>
                             <h3 className="info-heading">핵심 원리</h3>
@@ -461,6 +478,7 @@
                 const animationRef = useRef(null);
                 const timerRef = useRef(null);
                 const generatorRef = useRef(null);
+                const startTimeRef = useRef(null);
 
                 // 초기 데이터 생성
                 const generateNewData = useCallback(() => {
@@ -502,36 +520,48 @@
                     }
                 };
                 
-                // 리셋 핸들러
-                const handleReset = useCallback(() => {
-                    debugLog("초기화 버튼 클릭");
+                // 정렬 중지 함수
+                const stopSorting = () => {
+                    debugLog("정렬 중지");
                     clearAnimationFrame();
                     setIsSorting(false);
+                    generatorRef.current = null;
+                };
+                
+                // 리셋 핸들러
+                const handleReset = () => {
+                    debugLog("초기화 버튼 클릭");
+                    if (isSorting) {
+                        stopSorting();
+                    }
                     setTime(0);
                     setData(generateNewData());
-                    generatorRef.current = null;
-                }, [generateNewData]);
+                };
                 
-                // 정렬 시작 핸들러
-                const handleStart = () => {
-                    debugLog("시작 버튼 클릭");
-                    
+                // 정렬 시작/중지 토글 핸들러
+                const handleStartStop = () => {
                     if (isSorting) {
-                        debugLog("이미 정렬 중입니다");
-                        return;
+                        debugLog("정렬 중지 버튼 클릭");
+                        stopSorting();
+                    } else {
+                        debugLog("정렬 시작 버튼 클릭");
+                        startSorting();
                     }
-                    
+                };
+                
+                // 정렬 시작 함수
+                const startSorting = () => {
                     clearAnimationFrame();
                     setIsSorting(true);
                     
                     try {
                         // 제너레이터 함수 생성
                         generatorRef.current = sortGenerators[algorithm]([...data]);
-                        const startTime = performance.now();
+                        startTimeRef.current = performance.now();
                         
                         // 타이머 시작
                         timerRef.current = setInterval(() => {
-                            setTime((performance.now() - startTime) / 1000);
+                            setTime((performance.now() - startTimeRef.current) / 1000);
                         }, 10);
                         
                         // 애니메이션 함수
@@ -569,10 +599,19 @@
                 
                 // 알고리즘 변경 핸들러
                 const handleAlgorithmChange = (algo) => {
-                    if (isSorting) return;
+                    if (algo === algorithm) return; // 같은 알고리즘이면 무시
+                    
                     debugLog(`알고리즘 변경: ${algo}`);
+                    
+                    // 정렬 중이면 중지
+                    if (isSorting) {
+                        stopSorting();
+                    }
+                    
+                    // 알고리즘 변경
                     setAlgorithm(algo);
-                    handleReset();
+                    setTime(0);
+                    setData(generateNewData());
                 };
 
                 return (
@@ -587,7 +626,6 @@
                                 <button 
                                     key={key}
                                     className={`algo-button ${algorithm === key ? 'active' : ''}`}
-                                    disabled={isSorting}
                                     onClick={() => handleAlgorithmChange(key)}
                                 >
                                     {infoContent[key].title}
@@ -597,21 +635,19 @@
 
                         <main className="main-layout">
                             <Visualization data={data} />
-                            <InfoCard algo={algorithm} time={time} />
+                            <InfoCard algo={algorithm} time={time} isSorting={isSorting} />
                         </main>
 
                         <div className="actions">
                             <button 
-                                className="button primary-button" 
-                                onClick={handleStart} 
-                                disabled={isSorting}
+                                className={`button primary-button ${isSorting ? 'running' : ''}`}
+                                onClick={handleStartStop}
                             >
-                                {isSorting ? '정렬 중...' : '시작'}
+                                {isSorting ? '중지' : '시작'}
                             </button>
                             <button 
                                 className="button secondary-button" 
-                                onClick={handleReset} 
-                                disabled={isSorting}
+                                onClick={handleReset}
                             >
                                 초기화
                             </button>

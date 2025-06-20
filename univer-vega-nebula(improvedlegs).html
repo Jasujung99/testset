@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vega 성운계 (Vega Nebula System)</title>
+    
+    <!-- Vega 및 React 라이브러리 로드 -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega@5.22.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.6.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.21.0"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* 우주 테마 색상 팔레트 */
+            --cosmic-void: #050510;
+            --deep-space: #0a0a1a;
+            --nebula-purple: #1a1a2e;
+            --stellar-blue: #16213e;
+            --aurora-green: #0f3460;
+            
+            /* 액센트 색상 */
+            --star-white: #ffffff;
+            --plasma-blue: #4cc9f0;
+            --cosmic-purple: #7209b7;
+            --nebula-pink: #f72585;
+            --solar-yellow: #ffb700;
+            --galactic-green: #06ffa5;
+            
+            /* 그라데이션 */
+            --cosmic-gradient: linear-gradient(135deg, var(--cosmic-purple), var(--plasma-blue));
+            --nebula-gradient: radial-gradient(circle at center, var(--cosmic-purple)20%, var(--deep-space) 80%);
+            
+            /* 텍스트 색상 */
+            --text-primary: #e8f4f8;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Space Grotesk', sans-serif;
+            background: var(--cosmic-void);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* 우주 배경 애니메이션 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(2px 2px at 20px 30px, var(--star-white), transparent),
+                radial-gradient(2px 2px at 40px 70px, var(--plasma-blue), transparent),
+                radial-gradient(1px 1px at 90px 40px, var(--star-white), transparent),
+                radial-gradient(1px 1px at 130px 80px, var(--solar-yellow), transparent),
+                radial-gradient(2px 2px at 160px 30px, var(--star-white), transparent),
+                var(--cosmic-void);
+            background-repeat: repeat;
+            background-size: 200px 100px;
+            animation: starfield 60s linear infinite;
+            opacity: 0.6;
+            z-index: -1;
+        }
+
+        @keyframes starfield {
+            from { transform: translateY(0); }
+            to { transform: translateY(-100px); }
+        }
+
+        /* 메인 컨테이너 */
+        .cosmic-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 헤더 영역 */
+        .cosmic-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .cosmic-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            background: var(--cosmic-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+            position: relative;
+        }
+
+        .cosmic-title::after {
+            content: '';
+            position: absolute;
+            bottom: -0.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 2px;
+            background: var(--cosmic-gradient);
+            border-radius: 1px;
+        }
+
+        .cosmic-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+        }
+
+        .cosmic-description {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* 컨트롤 패널 */
+        .control-nebula {
+            background: linear-gradient(135deg, var(--nebula-purple)50%, var(--stellar-blue)50%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .control-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .control-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .algorithm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .algo-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .algo-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .algo-button:hover::before {
+            left: 100%;
+        }
+
+        .algo-button:hover {
+            border-color: var(--plasma-blue);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 201, 240, 0.3);
+        }
+
+        .algo-button.active {
+            background: var(--cosmic-gradient);
+            border-color: transparent;
+            color: var(--star-white);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(114, 9, 183, 0.4);
+        }
+
+        .param-control {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .param-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .param-value {
+            font-weight: 600;
+            color: var(--plasma-blue);
+            font-size: 1.1rem;
+        }
+
+        .cosmic-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .cosmic-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--cosmic-gradient);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(114, 9, 183, 0.4);
+            transition: all 0.2s;
+        }
+
+        .cosmic-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 20px rgba(114, 9, 183, 0.6);
+        }
+
+        .cosmic-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--cosmic-gradient);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 12px rgba(114, 9, 183, 0.4);
+        }
+
+        /* 메인 시각화 영역 */
+        .visualization-cosmos {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+    //    .vega-nebula {
+    //        background: var(--nebula-gradient);
+    //        border: 1px solid rgba(255, 255, 255, 0.1);
+    //        border-radius: 20px;
+    //        padding: 1.5rem;
+    //        min-height: 70vh;
+    //        position: relative;
+    //        overflow: hidden;
+    //       backdrop-filter: blur(5px);
+    //    }
+
+    //    .vega-nebula::before {
+    //        content: '';
+    //        position: absolute;
+    //        top: 0;
+    //        left: 0;
+    //        right: 0;
+    //        bottom: 0;
+    //        background: 
+    //            radial-gradient(circle at 20% 80%, rgba(114, 9, 183, 0.3) 0%, transparent 50%),
+    //            radial-gradient(circle at 80% 20%, rgba(76, 201, 240, 0.2) 0%, transparent 50%),
+    //            radial-gradient(circle at 40% 40%, rgba(6, 255, 165, 0.1) 0%, transparent 50%);
+    //        pointer-events: none;
+    //    }
+
+        #vega-cosmos {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            min-height: 500px;
+        }
+
+        /* 정보 패널 */
+        .info-constellation {
+            width: 350px;
+            background: linear-gradient(135deg, var(--stellar-blue), var(--aurora-green));
+            border: none;
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            height: fit-content;
+            box-shadow: 0 4px 32px rgba(76, 201, 240, 0.08);
+        }
+
+        .info-title, .info-heading, .info-text, .complexity-badge {
+            color: #eaf6ff !important;
+        }
+
+        .info-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-timer {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .timer-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .timer-value {
+            font-family: 'Space Grotesk', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--solar-yellow);
+            text-shadow: 0 0 10px rgba(255, 183, 0, 0.5);
+        }
+
+        .info-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .info-heading {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .complexity-badge {
+            display: inline-block;
+            background: var(--cosmic-gradient);
+            color: var(--star-white);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-family: 'Space Grotesk', monospace;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* 액션 버튼 */
+        .action-cluster {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .cosmic-button {
+            background: var(--cosmic-gradient);
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            color: var(--star-white);
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            min-width: 120px;
+        }
+
+        .cosmic-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .cosmic-button:hover::before {
+            left: 100%;
+        }
+
+        .cosmic-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(114, 9, 183, 0.4);
+        }
+
+        .cosmic-button:active {
+            transform: translateY(-1px);
+        }
+
+        .cosmic-button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .cosmic-button.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 12px 30px rgba(255, 255, 255, 0.1);
+        }
+
+        .cosmic-button.danger {
+            background: linear-gradient(135deg, var(--nebula-pink), #e11d48);
+        }
+
+        .cosmic-button.danger:hover {
+            box-shadow: 0 12px 30px rgba(247, 37, 133, 0.4);
+        }
+
+        .cosmic-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 상태 표시 */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--galactic-green);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.sorting {
+            background: var(--solar-yellow);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 1200px) {
+            .visualization-cosmos {
+                grid-template-columns: 1fr;
+            }
+            
+            .info-constellation {
+                width: 100%;
+                max-width: 500px;
+                margin: 0 auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .cosmic-container {
+                padding: 1rem;
+            }
+            
+            .control-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .algorithm-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .cosmic-title {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .algorithm-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-cluster {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* 로딩 애니메이션 */
+        .loading-nebula {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--plasma-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 툴팁 스타일 */
+        .cosmic-tooltip {
+            background: rgba(0, 0, 0, 0.9);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function runApp() {
+            const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+            // 알고리즘 정보 데이터
+            const ALGORITHM_INFO = {
+                bubble: {
+                    name: '중력파 정렬',
+                    description: '인접한 원소들을 비교하여 교환하는 과정을 반복합니다. 마치 중력파가 우주 공간을 통해 전파되듯 정렬이 진행됩니다.',
+                    complexity: 'O(n²)',
+                    color: '#4cc9f0',
+                    icon: '🌊'
+                },
+                selection: {
+                    name: '항성 선택 정렬',
+                    description: '매번 최솟값을 찾아 앞쪽에 배치합니다. 마치 가장 밝은 항성을 선택하여 성단을 형성하는 것과 같습니다.',
+                    complexity: 'O(n²)',
+                    color: '#7209b7',
+                    icon: '⭐'
+                },
+                insertion: {
+                    name: '궤도 삽입 정렬',
+                    description: '각 원소를 올바른 위치에 삽입합니다. 새로운 행성이 기존 궤도 시스템에 안정적으로 합류하는 과정과 유사합니다.',
+                    complexity: 'O(n²)',
+                    color: '#f72585',
+                    icon: '🪐'
+                },
+                merge: {
+                    name: '성운 병합 정렬',
+                    description: '분할정복 방식으로 작은 단위로 나누어 정렬한 후 병합합니다. 두 성운이 하나로 합쳐지는 장대한 우주적 현상입니다.',
+                    complexity: 'O(n log n)',
+                    color: '#06ffa5',
+                    icon: '🌌'
+                },
+                quick: {
+                    name: '퀘이사 피벗 정렬',
+                    description: '피벗을 기준으로 분할하여 정렬합니다. 강력한 퀘이사의 에너지가 주변 천체들을 재배열하는 것과 같습니다.',
+                    complexity: 'O(n log n)',
+                    color: '#ffb700',
+                    icon: '💫'
+                }
+            };
+
+            // 정렬 알고리즘 생성기 함수들
+            function* bubbleSort(arr) {
+                const array = [...arr];
+                const n = array.length;
+                
+                for (let i = 0; i < n - 1; i++) {
+                    for (let j = 0; j < n - i - 1; j++) {
+                        // 비교 상태 표시
+                        array[j].state = 'comparing';
+                        array[j + 1].state = 'comparing';
+                        yield [...array];
+                        
+                        if (array[j].value > array[j + 1].value) {
+                            // 교환
+                            [array[j], array[j + 1]] = [array[j + 1], array[j]];
+                            array[j].state = 'swapped';
+                            array[j + 1].state = 'swapped';
+                            yield [...array];
+                        }
+                        
+                        // 상태 초기화
+                        array[j].state = 'default';
+                        array[j + 1].state = 'default';
+                    }
+                    // 정렬 완료 표시
+                    array[n - 1 - i].state = 'sorted';
+                    yield [...array];
+                }
+                
+                // 모든 원소 정렬 완료
+                array.forEach(item => item.state = 'sorted');
+                yield [...array];
+                return array;
+            }
+
+            function* selectionSort(arr) {
+                const array = [...arr];
+                const n = array.length;
+                
+                for (let i = 0; i < n - 1; i++) {
+                    let minIdx = i;
+                    array[minIdx].state = 'selected';
+                    yield [...array];
+                    
+                    for (let j = i + 1; j < n; j++) {
+                        array[j].state = 'comparing';
+                        yield [...array];
+                        
+                        if (array[j].value < array[minIdx].value) {
+                            if (minIdx !== i) array[minIdx].state = 'default';
+                            minIdx = j;
+                            array[minIdx].state = 'selected';
+                            yield [...array];
+                        } else {
+                            array[j].state = 'default';
+                        }
+                    }
+                    
+                    if (minIdx !== i) {
+                        [array[i], array[minIdx]] = [array[minIdx], array[i]];
+                        array[i].state = 'swapped';
+                        array[minIdx].state = 'swapped';
+                        yield [...array];
+                    }
+                    
+                    array[i].state = 'sorted';
+                    array[minIdx].state = 'default';
+                    yield [...array];
+                }
+                
+                array[n - 1].state = 'sorted';
+                yield [...array];
+                return array;
+            }
+
+            function* insertionSort(arr) {
+                const array = [...arr];
+                const n = array.length;
+                
+                array[0].state = 'sorted';
+                yield [...array];
+                
+                for (let i = 1; i < n; i++) {
+                    const key = array[i];
+                    key.state = 'selected';
+                    yield [...array];
+                    
+                    let j = i - 1;
+                    while (j >= 0 && array[j].value > key.value) {
+                        array[j + 1] = array[j];
+                        array[j + 1].state = 'moving';
+                        yield [...array];
+                        j--;
+                    }
+                    
+                    array[j + 1] = key;
+                    
+                    // 정렬된 부분 업데이트
+                    for (let k = 0; k <= i; k++) {
+                        array[k].state = 'sorted';
+                    }
+                    yield [...array];
+                }
+                
+                return array;
+            }
+
+            function* mergeSort(arr) {
+                const array = [...arr];
+                yield* mergeSortHelper(array, 0, array.length - 1);
+                array.forEach(item => item.state = 'sorted');
+                yield [...array];
+                return array;
+            }
+
+            function* mergeSortHelper(array, left, right) {
+                if (left >= right) return;
+                
+                const mid = Math.floor((left + right) / 2);
+                yield* mergeSortHelper(array, left, mid);
+                yield* mergeSortHelper(array, mid + 1, right);
+                yield* merge(array, left, mid, right);
+            }
+
+            function* merge(array, left, mid, right) {
+                const leftArr = array.slice(left, mid + 1);
+                const rightArr = array.slice(mid + 1, right + 1);
+                
+                let i = 0, j = 0, k = left;
+                
+                while (i < leftArr.length && j < rightArr.length) {
+                    // 비교 상태 표시
+                    for (let idx = left; idx <= right; idx++) {
+                        array[idx].state = 'comparing';
+                    }
+                    yield [...array];
+                    
+                    if (leftArr[i].value <= rightArr[j].value) {
+                        array[k] = leftArr[i];
+                        i++;
+                    } else {
+                        array[k] = rightArr[j];
+                        j++;
+                    }
+                    
+                    array[k].state = 'merged';
+                    k++;
+                    yield [...array];
+                }
+                
+                while (i < leftArr.length) {
+                    array[k] = leftArr[i];
+                    array[k].state = 'merged';
+                    i++;
+                    k++;
+                    yield [...array];
+                }
+                
+                while (j < rightArr.length) {
+                    array[k] = rightArr[j];
+                    array[k].state = 'merged';
+                    j++;
+                    k++;
+                    yield [...array];
+                }
+                
+                // 병합 완료
+                for (let idx = left; idx <= right; idx++) {
+                    array[idx].state = 'sorted';
+                }
+                yield [...array];
+            }
+
+            function* quickSort(arr) {
+                const array = [...arr];
+                yield* quickSortHelper(array, 0, array.length - 1);
+                array.forEach(item => item.state = 'sorted');
+                yield [...array];
+                return array;
+            }
+
+            function* quickSortHelper(array, low, high) {
+                if (low < high) {
+                    const pi = yield* partition(array, low, high);
+                    yield* quickSortHelper(array, low, pi - 1);
+                    yield* quickSortHelper(array, pi + 1, high);
+                }
+            }
+
+            function* partition(array, low, high) {
+                const pivot = array[high];
+                pivot.state = 'pivot';
+                yield [...array];
+                
+                let i = low - 1;
+                
+                for (let j = low; j < high; j++) {
+                    array[j].state = 'comparing';
+                    yield [...array];
+                    
+                    if (array[j].value < pivot.value) {
+                        i++;
+                        if (i !== j) {
+                            [array[i], array[j]] = [array[j], array[i]];
+                            array[i].state = 'swapped';
+                            array[j].state = 'swapped';
+                            yield [...array];
+                        }
+                    }
+                    
+                    array[j].state = 'default';
+                }
+                
+                [array[i + 1], array[high]] = [array[high], array[i + 1]];
+                array[i + 1].state = 'sorted';
+                pivot.state = 'default';
+                yield [...array];
+                
+                return i + 1;
+            }
+
+            const SORT_ALGORITHMS = {
+                bubble: bubbleSort,
+                selection: selectionSort,
+                insertion: insertionSort,
+                merge: mergeSort,
+                quick: quickSort
+            };
+
+            // 메인 앱 컴포넌트
+            function VegaNebulaApp() {
+                const [algorithm, setAlgorithm] = useState('bubble');
+                const [dataSize, setDataSize] = useState(25);
+                const [animationSpeed, setAnimationSpeed] = useState(300);
+                const [data, setData] = useState([]);
+                const [isSorting, setIsSorting] = useState(false);
+                const [elapsedTime, setElapsedTime] = useState(0);
+                
+                const sortGeneratorRef = useRef(null);
+                const animationRef = useRef(null);
+                const timerRef = useRef(null);
+                const startTimeRef = useRef(null);
+
+                // 데이터 생성
+                const generateData = useCallback(() => {
+                    const newData = Array.from({ length: dataSize }, (_, i) => ({
+                        id: i,
+                        value: i + 1,
+                        state: 'default'
+                    }));
+                    
+                    // Fisher-Yates 셔플
+                    for (let i = newData.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [newData[i], newData[j]] = [newData[j], newData[i]];
+                    }
+                    
+                    return newData;
+                }, [dataSize]);
+
+                // 초기 데이터 설정
+                useEffect(() => {
+                    setData(generateData());
+                    setElapsedTime(0);
+                }, [dataSize, generateData]);
+
+                // Vega 스펙 생성
+                const vegaSpec = useMemo(() => {
+                    if (!data.length) return null;
+
+                    const width = 800;
+                    const height = 600;
+                    const centerX = width / 2;
+                    const centerY = height / 2;
+                    const maxRadius = Math.min(width, height) / 2 - 60;
+
+                    // 궤도 기반 배치 계산
+                    const orbitalData = data.map((d, index) => {
+                        const orbitLayers = 4;
+                        const itemsPerOrbit = Math.ceil(data.length / orbitLayers);
+                        const orbitIndex = Math.floor(index / itemsPerOrbit);
+                        const positionInOrbit = index % itemsPerOrbit;
+                        const radius = (maxRadius / orbitLayers) * (orbitIndex + 1);
+                        const angle = (2 * Math.PI / itemsPerOrbit) * positionInOrbit;
+                        const x = centerX + radius * Math.cos(angle);
+                        const y = centerY + radius * Math.sin(angle);
+                        // 상태별 색상 (파스텔/네온톤)
+                        const stateColors = {
+                            default: '#7ee8fa', // 밝은 파스텔 블루
+                            comparing: '#fbb1f9', // 연한 핑크
+                            swapped: '#ffe29a', // 연노랑
+                            selected: '#b388ff', // 연보라
+                            moving: '#a7ffeb', // 민트
+                            merged: '#a7ffeb',
+                            pivot: '#ffe29a',
+                            sorted: '#e0e7ff' // 연회색
+                        };
+                        const baseSize = 20;
+                        const valueSize = (d.value / data.length) * 15;
+                        const stateMultiplier = d.state === 'comparing' || d.state === 'pivot' ? 1.5 : 
+                                             d.state === 'swapped' || d.state === 'selected' ? 1.3 : 1;
+                        return {
+                            ...d,
+                            x,
+                            y,
+                            radius,
+                            angle: (angle * 180) / Math.PI,
+                            size: (baseSize + valueSize) * stateMultiplier,
+                            color: stateColors[d.state] || stateColors.default,
+                            opacity: d.state === 'sorted' ? 0.6 : 1
+                        };
+                    });
+
+                    // 궤도선 데이터
+                    const orbitData = [];
+                    const orbitLayers = 4;
+                    for (let layer = 1; layer <= orbitLayers; layer++) {
+                        const radius = (maxRadius / orbitLayers) * layer;
+                        for (let angle = 0; angle < 360; angle += 2) {
+                            const radian = (angle * Math.PI) / 180;
+                            orbitData.push({
+                                x: centerX + radius * Math.cos(radian),
+                                y: centerY + radius * Math.sin(radian),
+                                opacity: 0.08
+                            });
+                        }
+                    }
+
+                    // 중앙 핵 데이터
+                    const coreData = [{
+                        x: centerX,
+                        y: centerY,
+                        size: 60,
+                        color: ALGORITHM_INFO[algorithm].color
+                    }];
+
+                    // 파티클(별빛 입자) 데이터
+                    const particleData = Array.from({length: 60}, () => {
+                        const r = Math.random() * maxRadius * 0.95;
+                        const theta = Math.random() * 2 * Math.PI;
+                        return {
+                            x: centerX + r * Math.cos(theta),
+                            y: centerY + r * Math.sin(theta),
+                            size: Math.random() * 10 + 5,
+                            opacity: Math.random() * 0.25 + 0.1,
+                            color: Math.random() > 0.7 ? '#fff' : '#b388ff'
+                        };
+                    });
+
+                    return {
+                        $schema: 'https://vega.github.io/schema/vega/v5.json',
+                        width,
+                        height,
+                        padding: 20,
+                        background: null,
+                        data: [
+                            { name: 'orbits', values: orbitData },
+                            { name: 'core', values: coreData },
+                            { name: 'planets', values: orbitalData },
+                            { name: 'particles', values: particleData }
+                        ],
+                        marks: [
+                            // 파티클(별빛 입자)
+                            {
+                                type: 'symbol',
+                                from: { data: 'particles' },
+                                encode: {
+                                    enter: {
+                                        x: { field: 'x' },
+                                        y: { field: 'y' },
+                                        size: { field: 'size' },
+                                        fill: { field: 'color' },
+                                        fillOpacity: { field: 'opacity' },
+                                        stroke: { value: null }
+                                    }
+                                }
+                            },
+                            // 궤도선
+                            {
+                                type: 'symbol',
+                                from: { data: 'orbits' },
+                                encode: {
+                                    enter: {
+                                        x: { field: 'x' },
+                                        y: { field: 'y' },
+                                        size: { value: 1 },
+                                        fill: { value: '#fff' },
+                                        fillOpacity: { field: 'opacity' }
+                                    }
+                                }
+                            },
+                            // 중앙 핵 glow (더 큰, 투명한 심볼)
+                            {
+                                type: 'symbol',
+                                from: { data: 'core' },
+                                encode: {
+                                    enter: {
+                                        x: { field: 'x' },
+                                        y: { field: 'y' },
+                                        size: { field: 'size', mult: 45 },
+                                        fill: { field: 'color' },
+                                        fillOpacity: { value: 0.13 },
+                                        stroke: { value: null }
+                                    }
+                                }
+                            },
+                            // 중앙 핵 메인 (gradient 느낌)
+                            {
+                                type: 'symbol',
+                                from: { data: 'core' },
+                                encode: {
+                                    enter: {
+                                        x: { field: 'x' },
+                                        y: { field: 'y' },
+                                        size: { field: 'size', mult: 13 },
+                                        fill: { field: 'color' },
+                                        fillOpacity: { value: 0.95 },
+                                        stroke: { value: null }
+                                    }
+                                }
+                            },
+                            // 행성 glow (더 큰, 투명한 심볼)
+                            {
+                                type: 'symbol',
+                                from: { data: 'planets' },
+                                encode: {
+                                    enter: {
+                                        x: { field: 'x' },
+                                        y: { field: 'y' },
+                                        size: { field: 'size', mult: 22 },
+                                        fill: { field: 'color' },
+                                        fillOpacity: { signal: "datum.state === 'comparing' || datum.state === 'pivot' ? 0.32 : 0.11" },
+                                        stroke: { value: null }
+                                    }
+                                }
+                            },
+                            // 행성 메인 (별 느낌, stroke 제거)
+                            {
+                                type: 'symbol',
+                                from: { data: 'planets' },
+                                encode: {
+                                    enter: {
+                                        x: { field: 'x' },
+                                        y: { field: 'y' },
+                                        size: { field: 'size', mult: 10 },
+                                        fill: { field: 'color' },
+                                        fillOpacity: { field: 'opacity' },
+                                        stroke: { value: null }
+                                    }
+                                }
+                            },
+                            // 별의 sparkle 효과 (작은 흰색 점)
+                            {
+                                type: 'symbol',
+                                from: { data: 'planets' },
+                                encode: {
+                                    enter: {
+                                        x: { field: 'x' },
+                                        y: { field: 'y' },
+                                        size: { value: 8 },
+                                        fill: { value: '#fff' },
+                                        fillOpacity: { signal: "datum.state === 'sorted' ? 0.13 : 0.22" },
+                                        stroke: { value: null }
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                }, [data, algorithm]);
+
+                // Vega 렌더링
+                useEffect(() => {
+                    if (!vegaSpec) return;
+
+                    vegaEmbed('#vega-cosmos', vegaSpec, {
+                        actions: false,
+                        renderer: 'canvas',
+                        tooltip: false,
+                        hover: false
+                    }).catch(console.error);
+                }, [vegaSpec]);
+
+                // 정렬 애니메이션 제어
+                const startSorting = useCallback(() => {
+                    if (isSorting) return;
+                    
+                    setIsSorting(true);
+                    setElapsedTime(0);
+                    startTimeRef.current = performance.now();
+                    
+                    // 타이머 시작
+                    timerRef.current = setInterval(() => {
+                        setElapsedTime(performance.now() - startTimeRef.current);
+                    }, 50);
+                    
+                    // 정렬 생성기 시작
+                    sortGeneratorRef.current = SORT_ALGORITHMS[algorithm]([...data]);
+                    
+                    const animate = () => {
+                        if (!sortGeneratorRef.current) return;
+                        
+                        const result = sortGeneratorRef.current.next();
+                        if (!result.done) {
+                            setData(result.value);
+                            animationRef.current = setTimeout(animate, animationSpeed);
+                        } else {
+                            // 정렬 완료
+                            setData(result.value || data.map(d => ({ ...d, state: 'sorted' })));
+                            setIsSorting(false);
+                            clearInterval(timerRef.current);
+                        }
+                    };
+                    
+                    animate();
+                }, [algorithm, data, animationSpeed, isSorting]);
+
+                const stopSorting = useCallback(() => {
+                    if (animationRef.current) clearTimeout(animationRef.current);
+                    if (timerRef.current) clearInterval(timerRef.current);
+                    setIsSorting(false);
+                    sortGeneratorRef.current = null;
+                }, []);
+
+                const resetData = useCallback(() => {
+                    stopSorting();
+                    setData(generateData());
+                    setElapsedTime(0);
+                }, [stopSorting, generateData]);
+
+                // 클린업
+                useEffect(() => {
+                    return () => {
+                        if (animationRef.current) clearTimeout(animationRef.current);
+                        if (timerRef.current) clearInterval(timerRef.current);
+                    };
+                }, []);
+
+                const currentAlgorithm = ALGORITHM_INFO[algorithm];
+
+                return (
+                    <div className="cosmic-container">
+                        {/* 헤더 */}
+                        <header className="cosmic-header">
+                            <h1 className="cosmic-title">Vega 성운계</h1>
+                            <p className="cosmic-subtitle">선언적 문법으로 구현한 우주 정렬 시뮬레이션</p>
+                            <p className="cosmic-description">
+                                Vega의 강력한 데이터 변환과 시각적 문법을 활용하여 정렬 알고리즘을 
+                                아름다운 우주 천체의 움직임으로 표현합니다.
+                            </p>
+                        </header>
+
+                        {/* 컨트롤 패널 */}
+                        <div className="control-nebula">
+                            <div className="control-grid">
+                                {/* 알고리즘 선택 */}
+                                <div className="control-section">
+                                    <div className="control-label">
+                                        🧮 정렬 알고리즘
+                                    </div>
+                                    <div className="algorithm-grid">
+                                        {Object.entries(ALGORITHM_INFO).map(([key, info]) => (
+                                            <button
+                                                key={key}
+                                                className={`algo-button ${algorithm === key ? 'active' : ''}`}
+                                                onClick={() => !isSorting && setAlgorithm(key)}
+                                                disabled={isSorting}
+                                                title={info.description}
+                                            >
+                                                {info.icon} {info.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 매개변수 조정 */}
+                                <div className="control-section">
+                                    <div className="param-control">
+                                        <div className="control-label">🪐 천체 수량</div>
+                                        <div className="param-display">
+                                            <span>10</span>
+                                            <span className="param-value">{dataSize}</span>
+                                            <span>50</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="10"
+                                            max="50"
+                                            value={dataSize}
+                                            onChange={(e) => !isSorting && setDataSize(parseInt(e.target.value))}
+                                            disabled={isSorting}
+                                            className="cosmic-slider"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="control-section">
+                                    <div className="param-control">
+                                        <div className="control-label">⚡ 애니메이션 속도</div>
+                                        <div className="param-display">
+                                            <span>느림</span>
+                                            <span className="param-value">
+                                                {animationSpeed < 200 ? '빠름' : animationSpeed < 400 ? '보통' : '느림'}
+                                            </span>
+                                            <span>빠름</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="50"
+                                            max="800"
+                                            value={animationSpeed}
+                                            onChange={(e) => setAnimationSpeed(parseInt(e.target.value))}
+                                            className="cosmic-slider"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 메인 시각화 영역 */}
+                        <div className="visualization-cosmos">
+                            <div className="vega-nebula">
+                                <div id="vega-cosmos"></div>
+                            </div>
+
+                            {/* 정보 패널 */}
+                            <div className="info-constellation">
+                                <div className="info-title">
+                                    {currentAlgorithm.icon} {currentAlgorithm.name}
+                                </div>
+
+                                <div className="status-indicator">
+                                    <div className={`status-dot ${isSorting ? 'sorting' : ''}`}></div>
+                                    <span>{isSorting ? '정렬 진행 중' : '대기 중'}</span>
+                                </div>
+
+                                <div className="info-timer">
+                                    <div className="timer-label">경과 시간</div>
+                                    <div className="timer-value">
+                                        {(elapsedTime / 1000).toFixed(2)}s
+                                    </div>
+                                </div>
+
+                                <div className="info-section">
+                                    <div className="info-heading">🔬 알고리즘 개념</div>
+                                    <p className="info-text">{currentAlgorithm.description}</p>
+                                </div>
+
+                                <div className="info-section">
+                                    <div className="info-heading">⏱️ 시간 복잡도</div>
+                                    <span className="complexity-badge">{currentAlgorithm.complexity}</span>
+                                </div>
+
+                                <div className="info-section">
+                                    <div className="info-heading">📊 현재 상태</div>
+                                    <div className="info-text">
+                                        총 {dataSize}개의 천체 중 {data.filter(d => d.state === 'sorted').length}개 정렬 완료
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 액션 버튼 */}
+                        <div className="action-cluster">
+                            <button
+                                className={`cosmic-button ${isSorting ? 'danger' : ''}`}
+                                onClick={isSorting ? stopSorting : startSorting}
+                            >
+                                {isSorting ? '⏹️ 중지' : '▶️ 시작'}
+                            </button>
+                            <button
+                                className="cosmic-button secondary"
+                                onClick={resetData}
+                                disabled={isSorting}
+                            >
+                                🔄 초기화
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            // 앱 렌더링
+            const container = document.getElementById('root');
+            const root = ReactDOM.createRoot(container);
+            root.render(<VegaNebulaApp />);
+        }
+
+        // 라이브러리 로드 확인 후 앱 실행
+        let attempts = 0;
+        const maxAttempts = 100;
+        
+        const checkLibraries = setInterval(() => {
+            attempts++;
+            if (window.React && window.ReactDOM && window.vega && window.vegaEmbed) {
+                clearInterval(checkLibraries);
+                runApp();
+            } else if (attempts >= maxAttempts) {
+                clearInterval(checkLibraries);
+                document.getElementById('root').innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #e5e7eb;">
+                        <h2>⚠️ 라이브러리 로딩 실패</h2>
+                        <p>페이지를 새로고침해 주세요.</p>
+                    </div>
+                `;
+            }
+        }, 100);
+    </script>
+</body>
+</html>

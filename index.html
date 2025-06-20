@@ -388,8 +388,8 @@
         }
         
         .control-button {
-            padding: 0.75rem 2rem;
-            font-size: 1rem;
+            padding: 0.6rem 1.5rem; /* 크기 줄임 */
+            font-size: 0.95rem; /* 폰트 크기 조금 줄임 */
             border-radius: 10px;
             border: none;
             cursor: pointer;
@@ -621,7 +621,7 @@
             }
             
             .control-button {
-                padding: 0.6rem 1.5rem;
+                padding: 0.5rem 1.2rem;
                 font-size: 0.9rem;
             }
             
@@ -655,7 +655,7 @@
             // 알고리즘 정보
             const algoInfo = {
                 bubble: { 
-                    title: '흐르는 성운 (버블 정렬)', 
+                    title: '버블 정렬 (Bubble Sort)', 
                     concept: '이웃한 두 별을 비교하여 순서가 잘못되었을 경우 서로의 위치를 바꿉니다. 이 과정은 마치 큰 별이 천천히 성운의 가장자리로 떠오르는 것과 같습니다.',
                     bigO: 'O(n²) - 최악, 평균, 최선 케이스',
                     features: '구현이 간단하고 안정적이지만, 효율성이 낮아 큰 데이터셋에는 적합하지 않습니다. 대부분의 상황에서 다른 알고리즘보다 성능이 떨어집니다.',
@@ -663,7 +663,7 @@
                     complexity: 'O(n²)'
                 },
                 selection: { 
-                    title: '항성 선택 (선택 정렬)', 
+                    title: '선택 정렬 (Selection Sort)', 
                     concept: '전체 성운에서 가장 밝은 별을 찾아 적절한 위치로 이동시킵니다. 한 번에 하나의 별이 최종 위치를 찾아가는 과정입니다.',
                     bigO: 'O(n²) - 최악, 평균, 최선 케이스',
                     features: '메모리 사용이 적고 구현이 쉽지만, 데이터 크기에 관계없이 항상 O(n²)의 시간이 걸립니다. 안정적이지 않은 정렬 알고리즘입니다.',
@@ -671,7 +671,7 @@
                     complexity: 'O(n²)'
                 },
                 insertion: { 
-                    title: '궤도 조정 (삽입 정렬)', 
+                    title: '삽입 정렬 (Insertion Sort)', 
                     concept: '각 별을 올바른 위치에 삽입하여 부분적으로 정렬된 성운을 점진적으로 구축합니다. 마치 별들이 자신의 올바른 궤도를 찾아가는 것과 같습니다.',
                     bigO: 'O(n²) - 최악/평균, O(n) - 최선 케이스',
                     features: '작은 데이터셋이나 거의 정렬된 데이터에 효율적입니다. 온라인 알고리즘으로 데이터가 들어오는 대로 정렬할 수 있습니다.',
@@ -679,7 +679,7 @@
                     complexity: 'O(n²)'
                 },
                 merge: { 
-                    title: '성운 병합 (병합 정렬)', 
+                    title: '병합 정렬 (Merge Sort)', 
                     concept: '성운을 작은 부분으로 나누고, 각 부분을 정렬한 후 병합하는 분할 정복 방식입니다. 재귀적 특성이 돋보이는 알고리즘입니다.',
                     bigO: 'O(n log n) - 최악, 평균, 최선 케이스',
                     features: '안정적인 정렬 알고리즘으로 예측 가능한 성능을 제공합니다. 추가 메모리가 필요하지만, 대규모 데이터셋에서도 효율적으로 작동합니다.',
@@ -687,7 +687,7 @@
                     complexity: 'O(n log n)'
                 },
                 quick: { 
-                    title: '성운 분할 (퀵 정렬)', 
+                    title: '퀵 정렬 (Quick Sort)', 
                     concept: '피벗 요소를 기준으로 성운을 분할하고 각 부분을 재귀적으로 정렬합니다. 우주에서 은하가 형성되는 과정과 유사합니다.',
                     bigO: 'O(n²) - 최악, O(n log n) - 평균/최선 케이스',
                     features: '평균적으로 매우 빠르며 제자리 정렬이 가능합니다. 피벗 선택 방법에 따라 성능이 크게 달라지며, 재귀적 특성을 가집니다.',
@@ -1160,8 +1160,8 @@
                         const spiralGroup = svg.append("g")
                             .attr("transform", `translate(${centerX}, ${centerY})`);
                         
-                        // 나선 간격 계산 - 두 배로 키움
-                        const spiralStep = 120; // 값 증가: 30 -> 60 -> 120
+                        // 나선 간격 계산 - 120으로 키움
+                        const spiralStep = 120; // 사용자가 수정한 값 120
                         const spiralB = spiralStep / (2 * Math.PI);
                         
                         // 상태에 따른 색상 매핑
@@ -1174,47 +1174,39 @@
                             'default': '#3C6CDF'     // 파랑
                         };
                         
-                        // 나선형 경로 그리기 - 더 흐리게 설정
-                        const spiral = d3.lineRadial()
-                            .angle(d => d)
-                            .radius(d => spiralB * d);
-                        
-                        const spiralPoints = Array.from({ length: data.length * 3 }, (_, i) => i * 0.1);
-                        
-                        spiralGroup.append("path")
-                            .datum(spiralPoints)
-                            .attr("d", spiral)
-                            .attr("fill", "none")
-                            .attr("stroke", "rgba(255,255,255,0.1)") // 투명도 더 낮춤: 0.3 -> 0.1
-                            .attr("stroke-width", 1) // 두께 감소: 1.5 -> 1
-                            .attr("stroke-dasharray", "5,5"); // 대시 패턴 변경
+                        // 나선 점선 제거함 (요청에 따라)
                         
                         // 데이터를 나선형으로 배치
+                        const angleIncrement = 0.5;
+                        
+                        // 중앙 별과 첫 번째 별 사이 간격 추가
+                        const initialOffset = 0.5; // 시작 오프셋 추가
+                        
                         const nodes = spiralGroup.selectAll(".node")
                             .data(data)
                             .enter()
                             .append("g")
                             .attr("class", "node-group")
                             .attr("transform", (d, i) => {
-                                const angle = 0.5 * i;
+                                const angle = angleIncrement * (i + initialOffset); // 오프셋 추가
                                 const radius = spiralB * angle;
                                 return `translate(${radius * Math.cos(angle)}, ${radius * Math.sin(angle)})`;
                             });
                         
-                        // 노드 원 그리기 - 크기 키움
+                        // 노드 원 그리기 - 크기 유지
                         nodes.append("circle")
                             .attr("class", "node")
-                            .attr("r", d => 16 + (d.value / N) * 36) // 크기 키움: 6+16 -> 8+18
+                            .attr("r", d => 8 + (d.value / N) * 18)
                             .attr("fill", d => stateColor[d.state] || stateColor.default)
                             .attr("opacity", 0.85)
                             .attr("filter", d => d.state !== 'default' ? 
                                   `drop-shadow(0 0 5px ${stateColor[d.state]})` : 'none');
                         
-                        // 노드 값 텍스트 - 더 키움
+                        // 노드 값 텍스트
                         nodes.append("text")
                             .attr("class", "node-label")
                             .attr("dy", ".3em")
-                            .attr("font-size", "11px") // 글자 크기 키움: 10px -> 11px
+                            .attr("font-size", "11px")
                             .text(d => d.value);
                     }
                     
@@ -1447,7 +1439,10 @@
                                     onClick={() => handleAlgorithmChange(key)}
                                     data-algo={key}
                                 >
-                                    {algoInfo[key].title.split(' ')[0]}
+                                    {key === 'bubble' ? '버블' : 
+                                     key === 'selection' ? '선택' : 
+                                     key === 'insertion' ? '삽입' : 
+                                     key === 'merge' ? '병합' : '퀵'}
                                     <span className="complexity-badge">{algoInfo[key].complexity}</span>
                                 </button>
                             ))}

@@ -567,40 +567,111 @@
             const VegaVisualization = ({ data, algorithm }) => {
                 const containerRef = useRef();
                 const vegaRef = useRef(null);
-                
-                // Vega 스펙 생성 함수
+                  // Vega 스펙 생성 함수
                 const createVegaSpec = useCallback((dataset) => {
-                    // 중심점 좌표
-                    const center = 200;                    // 상태에 따른 색상 매핑 - 우주 테마 색상
+                    // 동적 크기 계산 (컨테이너 크기에 맞춤)
+                    const containerWidth = 600;
+                    const containerHeight = 500;
+                    const center = Math.min(containerWidth, containerHeight) / 2;                    // 상태에 따른 색상 매핑 - 개선된 우주 테마 색상 (그라데이션 효과)
                     const colorMap = {
-                        'default': '#60a5fa',      // 블루 (기본 행성)
-                        'comparing': '#f87171',    // 레드 (비교 중)
-                        'swapped': '#facc15',      // 옐로우 (교환됨)
-                        'sorted': '#4ade80',       // 그린 (정렬됨)
-                        'min': '#a78bfa',          // 퍼플 (최솟값)
-                        'key': '#fb923c',          // 오렌지 (키 값)
-                        'pivot': '#818cf8',        // 인디고 (피벗)
-                        'merged': '#34d399'        // 에메랄드 (병합됨)
+                        'default': { fill: '#60a5fa', stroke: '#3b82f6' },      // 블루 (기본 행성)
+                        'comparing': { fill: '#f87171', stroke: '#ef4444' },    // 레드 (비교 중)
+                        'swapped': { fill: '#facc15', stroke: '#eab308' },      // 옐로우 (교환됨)
+                        'sorted': { fill: '#4ade80', stroke: '#22c55e' },       // 그린 (정렬됨)
+                        'min': { fill: '#a78bfa', stroke: '#8b5cf6' },          // 퍼플 (최솟값)
+                        'key': { fill: '#fb923c', stroke: '#f97316' },          // 오렌지 (키 값)
+                        'pivot': { fill: '#818cf8', stroke: '#6366f1' },        // 인디고 (피벗)
+                        'merged': { fill: '#34d399', stroke: '#10b981' }        // 에메랄드 (병합됨)
                     };
                     
-                    // 데이터 확장: 극좌표 계산 (황금각으로 균등 분포)
+                    // 개선된 행성 배치 알고리즘
+                    // 궤도 정렬 방식으로 변경 (더 균일한 분포)
+                    const maxRadius = center * 0.75; // 가용 공간을 조금 더 활용
+                    
+                    // 각 행성 유형별 특성 정의
+                    const planetStyles = {
+                        'default': { 
+                            strokeWidth: 1.5, 
+                            pattern: 'plain'
+                        },
+                        'comparing': { 
+                            strokeWidth: 2, 
+                            pattern: 'ripple',
+                            glow: true
+                        },
+                        'swapped': { 
+                            strokeWidth: 2, 
+                            pattern: 'swirl',
+                            glow: true 
+                        },
+                        'sorted': { 
+                            strokeWidth: 1.5, 
+                            pattern: 'rings',
+                            glow: false
+                        },
+                        'min': { 
+                            strokeWidth: 2, 
+                            pattern: 'pulsar',
+                            glow: true
+                        },
+                        'key': { 
+                            strokeWidth: 2, 
+                            pattern: 'corona',
+                            glow: true
+                        },
+                        'pivot': { 
+                            strokeWidth: 2.5, 
+                            pattern: 'saturn',
+                            glow: true
+                        },
+                        'merged': { 
+                            strokeWidth: 1.5, 
+                            pattern: 'neptune',
+                            glow: false
+                        }
+                    };
+
+                    // 데이터 확장: 균일한 궤도 배치로 변경
                     const polarData = dataset.map((d, i) => {
-                        // 황금각(Golden Angle) 사용으로 균등 분포 구현
-                        const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // 약 137.5도
-                        const angle = i * goldenAngle;
+                        // 행성들을 궤도 레이어로 구성
+                        const totalItems = dataset.length;
+                        const layerCount = 5;  // 궤도 레이어 수
+                        const itemsPerLayer = Math.ceil(totalItems / layerCount);
                         
-                        // 아르키메데스 나선 공식 개선
-                        const spiralTightness = 8; // 나선의 간격
-                        const radius = Math.min(150, spiralTightness * Math.sqrt(i + 1));
+                        // 어느 레이어에 배치할지 결정
+                        const layerIndex = Math.floor(i / itemsPerLayer);
+                        const posInLayer = i % itemsPerLayer;
                         
-                        // 극좌표 -> 데카르트 좌표 변환
-                        const x = center + radius * Math.cos(angle);
-                        const y = center + radius * Math.sin(angle);
+                        // 레이어별 반지름
+                        const layerRadius = maxRadius * ((layerIndex + 1) / layerCount);
                         
-                        // 크기 계산 (더 큰 노드)
-                        const baseSize = 20; // 기본 크기 증가
-                        const variableSize = (d.value / dataset.length) * 25; // 가변 크기 증가
-                        const size = baseSize + variableSize;
+                        // 레이어 내 위치에 따른 각도
+                        const angleStep = (2 * Math.PI) / itemsPerLayer;
+                        // 각 레이어는 시작 각도를 조금씩 다르게하여 균등 분포
+                        const startAngle = (layerIndex * Math.PI / layerCount);
+                        const angle = startAngle + (posInLayer * angleStep);
+                        
+                        // 좌표 변환
+                        const x = center + layerRadius * Math.cos(angle);
+                        const y = center + layerRadius * Math.sin(angle);
+                        
+                        // 크기 계산 (값에 비례, 상태에 따라 다름)
+                        const baseSize = 16; // 기본 크기 약간 줄임
+                        const valueSize = (d.value / dataset.length) * 20;
+                        
+                        // 상태별 크기 배율 - 약간 차별화
+                        const stateMultiplier = 
+                            d.state === 'comparing' ? 1.35 : 
+                            d.state === 'swapped' ? 1.25 : 
+                            d.state === 'pivot' ? 1.5 : 
+                            d.state === 'key' ? 1.4 :
+                            d.state === 'min' ? 1.35 : 1.0;
+                            
+                        const size = (baseSize + valueSize) * stateMultiplier;
+                        
+                        // 행성 스타일 결정
+                        const style = planetStyles[d.state] || planetStyles.default;
+                        const colors = colorMap[d.state] || colorMap.default;
                         
                         return {
                             ...d,
@@ -608,41 +679,56 @@
                             y,
                             size,
                             angle,
-                            radius,
-                            color: colorMap[d.state] || colorMap.default
+                            radius: layerRadius,
+                            orbitIndex: layerIndex,
+                            fill: colors.fill,
+                            stroke: colors.stroke,
+                            strokeWidth: style.strokeWidth,
+                            pattern: style.pattern,
+                            glow: style.glow,
+                            opacity: d.state === 'default' ? 0.85 : 1.0
                         };
                     });
-                      // 중앙 "태양" 데이터 (크기 확대)
+                      // 중앙 "태양" 데이터 (향상된 태양 효과)
                     const sunData = [{
                         x: center,
                         y: center,
-                        size: 60, // 중앙 태양 크기 증가
+                        size: 70, // 태양 크기 조정
                         color: algoInfo[algorithm].color,
-                        isSun: true
+                        glowColor: algoInfo[algorithm].color + "88", // 반투명 글로우 효과
+                        isSun: true,
+                        opacity: 0.9
                     }];
                     
-                    // 궤도선 데이터 생성
+                    // 개선된 궤도선 데이터 (각 레이어에 맞는 궤도) 
                     const orbitData = [];
-                    for (let r = 40; r <= 150; r += 30) {
-                        for (let angle = 0; angle < 360; angle += 5) {
+                    const layerCount = 5; // 행성 레이어 수와 동일하게
+                    
+                    // 각 레이어마다 궤도 생성
+                    for (let layer = 1; layer <= layerCount; layer++) {
+                        const orbitRadius = maxRadius * (layer / layerCount);
+                        
+                        // 각 궤도는 조밀하게 점으로 표현
+                        for (let angle = 0; angle < 360; angle += 3) {
                             const radian = (angle * Math.PI) / 180;
                             orbitData.push({
-                                x: center + r * Math.cos(radian),
-                                y: center + r * Math.sin(radian),
-                                radius: r
+                                x: center + orbitRadius * Math.cos(radian),
+                                y: center + orbitRadius * Math.sin(radian),
+                                radius: orbitRadius,
+                                layer: layer,
+                                opacity: 0.12 - (layer / layerCount) * 0.04 // 바깥 궤도일수록 더 투명하게
                             });
                         }
                     }
-                    
-                    // Vega 스펙 정의
+                      // Vega 스펙 정의 (완전히 개선됨)
                     return {
                         "$schema": "https://vega.github.io/schema/vega/v5.json",
-                        "width": 400,
-                        "height": 400,
-                        "padding": 20,
-                        "autosize": "none",
-                        "background": null,
-                          "data": [
+                        "width": containerWidth,
+                        "height": containerHeight,
+                        "padding": 0,
+                        "autosize": {"type": "fit", "contains": "padding"},
+                        "background": null,                        
+                        "data": [
                             {
                                 "name": "orbits",
                                 "values": orbitData
@@ -665,26 +751,43 @@
                                     "enter": {
                                         "x": {"field": "x"},
                                         "y": {"field": "y"},
-                                        "size": {"value": 1},
-                                        "fill": {"value": "rgba(255,255,255,0.1)"},
-                                        "stroke": {"value": "none"}
+                                        "size": {"value": 0.8},
+                                        "fill": {"value": "rgba(255,255,255,0.15)"},
+                                        "fillOpacity": {"field": "opacity"}
                                     }
                                 }
-                            },                            {
+                            },
+                            {
                                 "type": "symbol",
                                 "from": {"data": "sun"},
                                 "encode": {
                                     "enter": {
                                         "x": {"field": "x"},
                                         "y": {"field": "y"},
-                                        "size": {"field": "size", "mult": 15},
-                                        "fill": {"field": "color"},
-                                        "fillOpacity": {"value": 0.8}
+                                        "size": {"field": "size", "mult": 12}
                                     },
                                     "update": {
-                                        "stroke": {"value": "white"},
-                                        "strokeOpacity": {"value": 0.5},
+                                        "fill": {"field": "color"},
+                                        "fillOpacity": {"field": "opacity"},
+                                        "stroke": {"value": "rgba(255,255,255,0.8)"},
+                                        "strokeOpacity": {"value": 0.6},
                                         "strokeWidth": {"value": 3}
+                                    }
+                                }
+                            },
+                            {
+                                "type": "symbol", 
+                                "from": {"data": "sun"},
+                                "encode": {
+                                    "enter": {
+                                        "x": {"field": "x"},
+                                        "y": {"field": "y"},
+                                        "size": {"field": "size", "mult": 20}
+                                    },
+                                    "update": {
+                                        "fill": {"field": "color"},
+                                        "fillOpacity": {"value": 0.3},
+                                        "stroke": {"value": "none"}
                                     }
                                 }
                             },                            {
@@ -694,14 +797,30 @@
                                     "enter": {
                                         "x": {"field": "x"},
                                         "y": {"field": "y"},
-                                        "size": {"field": "size", "mult": 15}
+                                        "size": {"field": "size", "mult": 10}
                                     },
                                     "update": {
-                                        "fill": {"field": "color"},
-                                        "fillOpacity": {"value": 0.85},
-                                        "stroke": {"value": "rgba(255,255,255,0.6)"},
-                                        "strokeOpacity": {"value": 0.6},
-                                        "strokeWidth": {"value": 2}
+                                        "fill": {"field": "fill"},
+                                        "fillOpacity": {"field": "opacity"},
+                                        "stroke": {"field": "stroke"},
+                                        "strokeOpacity": {"value": 0.9},
+                                        "strokeWidth": {"field": "strokeWidth"}
+                                    }
+                                }
+                            },
+                            {
+                                "type": "symbol",
+                                "from": {"data": "planets"},
+                                "encode": {
+                                    "enter": {
+                                        "x": {"field": "x"},
+                                        "y": {"field": "y"},
+                                        "size": {"field": "size", "mult": 16}
+                                    },
+                                    "update": {
+                                        "fill": {"field": "fill"},
+                                        "fillOpacity": {"value": 0.2},
+                                        "stroke": {"value": "none"}
                                     }
                                 }
                             },
@@ -715,10 +834,15 @@
                                         "text": {"field": "value"},
                                         "align": {"value": "center"},
                                         "baseline": {"value": "middle"},
-                                        "fill": {"value": "white"},
-                                        "fontSize": {"value": 14}, // 텍스트 크기 증가
+                                        "fontSize": {"value": 13},
                                         "fontWeight": {"value": "bold"},
-                                        "font": {"value": "monospace"}
+                                        "font": {"value": "Noto Sans KR"}
+                                    },
+                                    "update": {
+                                        "fill": {"value": "white"},
+                                        "fillOpacity": {"value": 1.0},
+                                        "stroke": {"value": "rgba(0,0,0,0.5)"},
+                                        "strokeWidth": {"value": 0.5}
                                     }
                                 }
                             }

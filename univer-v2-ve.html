@@ -58,16 +58,23 @@
             color: var(--text-secondary);
             font-size: 1.125rem;
             margin-bottom: 2rem;
-        }        
-        .vis-container {
+        }          .vis-container {
             position: relative;
-            background: radial-gradient(circle, #2d3748 0%, var(--bg-deep-space) 70%);
+            background: radial-gradient(circle at center, #2d3748 0%, var(--bg-deep-space) 70%);
             min-height: 60vh;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
+        }
+        
+        #vega-vis {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .controls-group {
@@ -453,9 +460,8 @@
 <body>
     <div id="root"></div>
 
-    <script type="text/babel">
-        function runApp() {
-            const { useState, useEffect, useRef, useCallback } = React;
+    <script type="text/babel">        function runApp() {
+            const { useState, useEffect, useRef, useCallback, useMemo } = React;
             const N = 25; // 데이터 포인트 수
               // 알고리즘 정보 - 우주 테마
             const algoInfo = {
@@ -701,44 +707,64 @@
             // Vega 시각화 컴포넌트
             const VegaVisualization = ({ data, algorithm }) => {
                 const containerRef = useRef();
-                const vegaRef = useRef(null);                // Vega 스펙 생성 함수 (성능 최적화)
-                const createVegaSpec = useCallback((dataset) => {
-                    // 동적 크기 계산 (컨테이너 크기에 맞춤)
-                    const containerWidth = 600;
-                    const containerHeight = 500;
+                const vegaRef = useRef(null);                // 메모이제이션된 값들을 컴포넌트 최상위 레벨에서 정의
+                const memoizedColorMap = useMemo(() => ({
+                    'default': { fill: 'rgba(129, 140, 248, 0.85)', stroke: 'rgba(99, 102, 241, 0.9)' },
+                    'comparing': { fill: 'rgba(251, 113, 133, 0.95)', stroke: 'rgba(239, 68, 68, 1)' },
+                    'swapped': { fill: 'rgba(251, 191, 36, 0.95)', stroke: 'rgba(245, 158, 11, 1)' },
+                    'sorted': { fill: 'rgba(132, 204, 22, 0.75)', stroke: 'rgba(101, 163, 13, 0.8)' },
+                    'min': { fill: 'rgba(196, 181, 253, 0.9)', stroke: 'rgba(139, 92, 246, 1)' },
+                    'key': { fill: 'rgba(251, 146, 60, 0.9)', stroke: 'rgba(249, 115, 22, 1)' },
+                    'pivot': { fill: 'rgba(147, 197, 253, 0.95)', stroke: 'rgba(59, 130, 246, 1)' },
+                    'merged': { fill: 'rgba(110, 231, 183, 0.9)', stroke: 'rgba(16, 185, 129, 1)' }
+                }), []);
+
+                const memoizedPlanetStyles = useMemo(() => ({
+                    'default': { strokeWidth: 1.5, pattern: 'plain' },
+                    'comparing': { strokeWidth: 2, pattern: 'ripple', glow: true },
+                    'swapped': { strokeWidth: 2, pattern: 'swirl', glow: true },
+                    'sorted': { strokeWidth: 1.5, pattern: 'rings', glow: false },
+                    'min': { strokeWidth: 2, pattern: 'pulsar', glow: true },
+                    'key': { strokeWidth: 2, pattern: 'corona', glow: true },
+                    'pivot': { strokeWidth: 2.5, pattern: 'saturn', glow: true },
+                    'merged': { strokeWidth: 1.5, pattern: 'neptune', glow: false }
+                }), []);                // Vega 스펙 생성 함수 (메모이제이션된 값들을 의존성으로 추가)
+                const createVegaSpec = useCallback((dataset) => {                    // 컨테이너 크기를 실제 뷰포트에 맞게 조정
+                    const containerWidth = 800;
+                    const containerHeight = 600;
                     const center = Math.min(containerWidth, containerHeight) / 2;
-
-                    // 성능 최적화: 중복 계산 방지
-                    const memoizedColorMap = useMemo(() => ({
-                        'default': { fill: '#60a5fa', stroke: '#3b82f6' },
-                        'comparing': { fill: '#f87171', stroke: '#ef4444' },
-                        'swapped': { fill: '#facc15', stroke: '#eab308' },
-                        'sorted': { fill: '#4ade80', stroke: '#22c55e' },
-                        'min': { fill: '#a78bfa', stroke: '#8b5cf6' },
-                        'key': { fill: '#fb923c', stroke: '#f97316' },
-                        'pivot': { fill: '#818cf8', stroke: '#6366f1' },
-                        'merged': { fill: '#34d399', stroke: '#10b981' }
-                    }), []);
-
-                    const memoizedPlanetStyles = useMemo(() => ({
-                        'default': { strokeWidth: 1.5, pattern: 'plain' },
-                        'comparing': { strokeWidth: 2, pattern: 'ripple', glow: true },
-                        'swapped': { strokeWidth: 2, pattern: 'swirl', glow: true },
-                        'sorted': { strokeWidth: 1.5, pattern: 'rings', glow: false },
-                        'min': { strokeWidth: 2, pattern: 'pulsar', glow: true },
-                        'key': { strokeWidth: 2, pattern: 'corona', glow: true },
-                        'pivot': { strokeWidth: 2.5, pattern: 'saturn', glow: true },
-                        'merged': { strokeWidth: 1.5, pattern: 'neptune', glow: false }
-                    }), []);
+                    
+                    // 시각화 영역을 더 넓게 사용
+                    const visualizationPadding = 50;
                     
                     // 개선된 행성 배치 알고리즘
                     const maxRadius = center * 0.75;
 
-                    // 데이터 확장: 균일한 궤도 배치로 변경
+                    // 데이터 확장: 균일한 궤도 배치로 변경                    // 로마 숫자 변환 함수
+                    const toRoman = num => {
+                        const romanNumerals = [
+                            { value: 25, numeral: 'XXV' }, { value: 24, numeral: 'XXIV' },
+                            { value: 20, numeral: 'XX' }, { value: 19, numeral: 'XIX' },
+                            { value: 15, numeral: 'XV' }, { value: 14, numeral: 'XIV' },
+                            { value: 10, numeral: 'X' }, { value: 9, numeral: 'IX' },
+                            { value: 5, numeral: 'V' }, { value: 4, numeral: 'IV' },
+                            { value: 1, numeral: 'I' }
+                        ];
+                        let result = '';
+                        let remaining = num;
+                        for (let i = 0; i < romanNumerals.length; i++) {
+                            while (remaining >= romanNumerals[i].value) {
+                                result += romanNumerals[i].numeral;
+                                remaining -= romanNumerals[i].value;
+                            }
+                        }
+                        return result;
+                    };
+
                     const polarData = dataset.map((d, i) => {
-                        // 행성들을 궤도 레이어로 구성
+                        // 행성들을 궤도 레이어로 구성 (더 자연스러운 분포)
                         const totalItems = dataset.length;
-                        const layerCount = 5;  // 궤도 레이어 수
+                        const layerCount = 4;  // 궤도 레이어 수를 줄여서 더 조밀하게
                         const itemsPerLayer = Math.ceil(totalItems / layerCount);
                         
                         // 어느 레이어에 배치할지 결정
@@ -757,25 +783,24 @@
                         // 좌표 변환
                         const x = center + layerRadius * Math.cos(angle);
                         const y = center + layerRadius * Math.sin(angle);
+                          // 향상된 크기 계산 시스템
+                        const baseSize = 14; // 기본 크기를 더 작게 조정
+                        const valueSize = (d.value / dataset.length) * 16; // 크기 차이를 줄임
                         
-                        // 크기 계산 (값에 비례, 상태에 따라 다름)
-                        const baseSize = 16; // 기본 크기 약간 줄임
-                        const valueSize = (d.value / dataset.length) * 20;
-                          // 상태별 크기 배율 - 더욱 역동적으로 강화
+                        // 더 미묘한 상태별 크기 배율
                         const stateMultiplier = 
-                            d.state === 'comparing' ? 1.5 : 
-                            d.state === 'swapped' ? 1.4 : 
-                            d.state === 'pivot' ? 1.7 : 
-                            d.state === 'key' ? 1.45 :
-                            d.state === 'min' ? 1.4 : 
-                            d.state === 'sorted' ? 1.1 : 1.0;
+                            d.state === 'comparing' ? 1.3 : 
+                            d.state === 'swapped' ? 1.25 : 
+                            d.state === 'pivot' ? 1.4 : 
+                            d.state === 'key' ? 1.35 :
+                            d.state === 'min' ? 1.3 : 
+                            d.state === 'sorted' ? 1.05 : 1.0;
                             
                         const size = (baseSize + valueSize) * stateMultiplier;
                           // 행성 스타일 결정 (성능 최적화)
                         const style = memoizedPlanetStyles[d.state] || memoizedPlanetStyles.default;
                         const colors = memoizedColorMap[d.state] || memoizedColorMap.default;
-                        
-                        return {
+                          return {
                             ...d,
                             x,
                             y,
@@ -788,18 +813,19 @@
                             strokeWidth: style.strokeWidth,
                             pattern: style.pattern,
                             glow: style.glow,
-                            opacity: d.state === 'default' ? 0.85 : 1.0
+                            opacity: d.state === 'default' ? 0.85 : 1.0,
+                            romanText: toRoman(d.value) // 로마 숫자 필드 추가
                         };
-                    });
-                      // 중앙 "태양" 데이터 (향상된 태양 효과)
+                    });                    // 중앙 "태양" 데이터 (향상된 태양 효과)
                     const sunData = [{
                         x: center,
                         y: center,
-                        size: 70, // 태양 크기 조정
+                        size: 80, // 태양 크기 증가
                         color: algoInfo[algorithm].color,
-                        glowColor: algoInfo[algorithm].color + "88", // 반투명 글로우 효과
+                        glowColor: algoInfo[algorithm].color + "44", // 더 부드러운 글로우
+                        coronaColor: algoInfo[algorithm].color + "22", // 코로나 효과
                         isSun: true,
-                        opacity: 0.9
+                        opacity: 0.95
                     }];
                     
                     // 개선된 궤도선 데이터 (각 레이어에 맞는 궤도) 
@@ -844,8 +870,7 @@
                                 "values": sunData
                             }
                         ],
-                        
-                        "marks": [
+                          "marks": [
                             {
                                 "type": "symbol",
                                 "from": {"data": "orbits"},
@@ -853,12 +878,48 @@
                                     "enter": {
                                         "x": {"field": "x"},
                                         "y": {"field": "y"},
-                                        "size": {"value": 0.8},
-                                        "fill": {"value": "rgba(255,255,255,0.15)"},
+                                        "size": {"value": 0.5}, // 더 작은 점으로 궤도 표현
+                                        "fill": {"value": "rgba(255,255,255,0.1)"}, // 더 투명한 궤도
                                         "fillOpacity": {"field": "opacity"}
                                     }
                                 }
+                            },                            // 중앙 태양 - 코로나 효과 (가장 바깥층)
+                            {
+                                "type": "symbol", 
+                                "from": {"data": "sun"},
+                                "encode": {
+                                    "enter": {
+                                        "x": {"field": "x"},
+                                        "y": {"field": "y"},
+                                        "size": {"field": "size", "mult": 25}
+                                    },
+                                    "update": {
+                                        "fill": {"field": "color"},
+                                        "fillOpacity": {"value": 0.15},
+                                        "stroke": {"value": "none"}
+                                    }
+                                }
                             },
+                            // 중앙 태양 - 글로우 효과 (중간층)
+                            {
+                                "type": "symbol",
+                                "from": {"data": "sun"},
+                                "encode": {
+                                    "enter": {
+                                        "x": {"field": "x"},
+                                        "y": {"field": "y"},
+                                        "size": {"field": "size", "mult": 16}
+                                    },
+                                    "update": {
+                                        "fill": {"field": "color"},
+                                        "fillOpacity": {"value": 0.4},
+                                        "stroke": {"value": "rgba(255,255,255,0.3)"},
+                                        "strokeOpacity": {"value": 0.5},
+                                        "strokeWidth": {"value": 2}
+                                    }
+                                }
+                            },
+                            // 중앙 태양 - 메인 바디 (핵심)
                             {
                                 "type": "symbol",
                                 "from": {"data": "sun"},
@@ -871,46 +932,53 @@
                                     "update": {
                                         "fill": {"field": "color"},
                                         "fillOpacity": {"field": "opacity"},
-                                        "stroke": {"value": "rgba(255,255,255,0.8)"},
-                                        "strokeOpacity": {"value": 0.6},
+                                        "stroke": {"value": "rgba(255,255,255,0.9)"},
+                                        "strokeOpacity": {"value": 0.7},
                                         "strokeWidth": {"value": 3}
                                     }
                                 }
-                            },
+                            },// 행성 메인 바디 (더 현실적인 행성 모습)
                             {
-                                "type": "symbol", 
-                                "from": {"data": "sun"},
-                                "encode": {
-                                    "enter": {
-                                        "x": {"field": "x"},
-                                        "y": {"field": "y"},
-                                        "size": {"field": "size", "mult": 20}
-                                    },
-                                    "update": {
-                                        "fill": {"field": "color"},
-                                        "fillOpacity": {"value": 0.3},
-                                        "stroke": {"value": "none"}
-                                    }
-                                }
-                            },                            {
                                 "type": "symbol",
                                 "from": {"data": "planets"},
                                 "encode": {
                                     "enter": {
                                         "x": {"field": "x"},
                                         "y": {"field": "y"},
-                                        "size": {"field": "size", "mult": 10}
+                                        "size": {"field": "size", "mult": 12}
                                     },
-                                    "update": {
-                                        "fill": {"field": "fill"},
-                                        "fillOpacity": {"field": "opacity"},
+                                    "update": {                                        "fill": {
+                                            "signal": "datum.state === 'sorted' ? 'rgba(175, 219, 173, 0.9)' : datum.fill"
+                                        },
+                                        "fillOpacity": {
+                                            "signal": "datum.state === 'sorted' ? 0.8 : datum.opacity"
+                                        },
                                         "stroke": {"field": "stroke"},
                                         "strokeOpacity": {
-                                            "signal": "datum.state === 'comparing' || datum.state === 'swapped' || datum.state === 'pivot' ? 1.0 : 0.9"
+                                            "signal": "datum.state === 'comparing' || datum.state === 'swapped' || datum.state === 'pivot' ? 0.95 : datum.state === 'sorted' ? 0.6 : 0.8"
                                         },
                                         "strokeWidth": {
-                                            "signal": "datum.state === 'comparing' ? 3 : datum.state === 'pivot' ? 4 : datum.strokeWidth"
+                                            "signal": "datum.state === 'comparing' ? 2 : datum.state === 'pivot' ? 2.5 : datum.state === 'sorted' ? 1 : datum.strokeWidth"
                                         }
+                                    }
+                                }
+                            },
+                            // 행성 하이라이트 효과 (더 은은하게)
+                            {
+                                "type": "symbol",
+                                "from": {"data": "planets"},
+                                "encode": {
+                                    "enter": {
+                                        "x": {"field": "x"},
+                                        "y": {"field": "y"},
+                                        "size": {"field": "size", "mult": 6}
+                                    },
+                                    "update": {
+                                        "fill": {"value": "rgba(255,255,255,0.3)"},
+                                        "fillOpacity": {
+                                            "signal": "datum.state === 'sorted' ? 0.2 : 0.4"
+                                        },
+                                        "stroke": {"value": "none"}
                                     }
                                 }
                             },
@@ -948,32 +1016,35 @@
                                         "stroke": {"value": "none"}
                                     }
                                 }
-                            },
-                            {
+                            },                            {
                                 "type": "text",
                                 "from": {"data": "planets"},
                                 "encode": {
                                     "enter": {
                                         "x": {"field": "x"},
                                         "y": {"field": "y"},
-                                        "text": {"field": "value"},
+                                        "text": {"field": "romanText"}, // 필드 참조로 변경
                                         "align": {"value": "center"},
                                         "baseline": {"value": "middle"},
-                                        "fontSize": {"value": 13},
-                                        "fontWeight": {"value": "bold"},
-                                        "font": {"value": "Noto Sans KR"}
+                                        "fontSize": {"value": 9}, // 더 작은 폰트
+                                        "fontWeight": {"value": "400"}, // 더 가벼운 폰트
+                                        "font": {"value": "'Times New Roman', serif"} // 클래식한 세리프 폰트
                                     },
                                     "update": {
-                                        "fill": {"value": "white"},
-                                        "fillOpacity": {"value": 1.0},
-                                        "stroke": {"value": "rgba(0,0,0,0.5)"},
-                                        "strokeWidth": {"value": 0.5}
+                                        "fill": {
+                                            "signal": "datum.state === 'comparing' || datum.state === 'pivot' ? 'rgba(255,255,255,1)' : datum.state === 'sorted' ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.8)'"
+                                        },
+                                        "fillOpacity": {
+                                            "signal": "datum.state === 'sorted' ? 0.7 : 1"
+                                        },
+                                        "stroke": {"value": "rgba(0,0,0,0.15)"},
+                                        "strokeWidth": {"value": 0.2}
                                     }
                                 }
                             }
                         ]
                     };
-                }, [algorithm]);
+                }, [algorithm, memoizedColorMap, memoizedPlanetStyles]);
                   // Vega 시각화 렌더링 (애니메이션 개선)
                 useEffect(() => {
                     if (!data || data.length === 0 || !containerRef.current) return;
@@ -1034,10 +1105,24 @@
                         }
                         
                         arrayContainer.appendChild(arrayItem);
-                    });
-                    
+                    });                    
                     containerEl.appendChild(arrayContainer);
-                }, [data, createVegaSpec]);return (
+                }, [data, createVegaSpec]);
+
+                // Vega cleanup 
+                useEffect(() => {
+                    return () => {
+                        if (vegaRef?.current?.view) {
+                            try {
+                                vegaRef.current.view.finalize();
+                            } catch (e) {
+                                console.warn('Vega view cleanup warning:', e);
+                            }
+                        }
+                    };
+                }, []);
+
+                return (
                     <div ref={containerRef} className="vis-container">
                         <div id="vega-vis"></div>
                     </div>
@@ -1154,15 +1239,8 @@
                         }
                         if (timerRef.current) {
                             clearInterval(timerRef.current);
-                            timerRef.current = null;
-                        }
-                        if (vegaRef?.current?.view) {
-                            try {
-                                vegaRef.current.view.finalize();
-                            } catch (e) {
-                                console.warn('Vega view cleanup warning:', e);
-                            }
-                        }
+                            timerRef.current = null;                        }
+                        // Vega cleanup은 VegaVisualization 컴포넌트에서 처리됨
                     };
                 }, [generateNewData]);
 

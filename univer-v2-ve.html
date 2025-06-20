@@ -340,8 +340,7 @@
             width: 100%;
             height: 100%;
         }
-        
-        /* 반응형 스타일 */
+          /* 반응형 스타일 개선 */
         @media (max-width: 768px) {
             .title {
                 font-size: 2rem;
@@ -355,9 +354,12 @@
             }
             .controls-group {
                 gap: 0.5rem;
+                padding: 0.8rem;
             }
             .control-section {
                 gap: 0.3rem;
+                flex-direction: column;
+                align-items: stretch;
             }
             .array-item {
                 width: 24px;
@@ -369,6 +371,46 @@
             }
             .app-wrapper {
                 padding: 1rem;
+                max-width: 100%;
+            }
+            .main-layout {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .vis-container {
+                min-height: 50vh;
+            }
+            .info-text {
+                font-size: 0.85rem;
+            }
+            .slider-container {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: stretch;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .title {
+                font-size: 1.8rem;
+            }
+            .app-wrapper {
+                padding: 0.5rem;
+            }
+            .controls-group {
+                padding: 0.5rem;
+            }
+            .algo-button {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.75rem;
+            }
+            .array-item {
+                width: 20px;
+                height: 20px;
+                font-size: 10px;
+            }
+            .vis-container {
+                min-height: 40vh;
             }
         }
         
@@ -659,70 +701,38 @@
             // Vega 시각화 컴포넌트
             const VegaVisualization = ({ data, algorithm }) => {
                 const containerRef = useRef();
-                const vegaRef = useRef(null);
-                  // Vega 스펙 생성 함수
+                const vegaRef = useRef(null);                // Vega 스펙 생성 함수 (성능 최적화)
                 const createVegaSpec = useCallback((dataset) => {
                     // 동적 크기 계산 (컨테이너 크기에 맞춤)
                     const containerWidth = 600;
                     const containerHeight = 500;
-                    const center = Math.min(containerWidth, containerHeight) / 2;                    // 상태에 따른 색상 매핑 - 개선된 우주 테마 색상 (그라데이션 효과)
-                    const colorMap = {
-                        'default': { fill: '#60a5fa', stroke: '#3b82f6' },      // 블루 (기본 행성)
-                        'comparing': { fill: '#f87171', stroke: '#ef4444' },    // 레드 (비교 중)
-                        'swapped': { fill: '#facc15', stroke: '#eab308' },      // 옐로우 (교환됨)
-                        'sorted': { fill: '#4ade80', stroke: '#22c55e' },       // 그린 (정렬됨)
-                        'min': { fill: '#a78bfa', stroke: '#8b5cf6' },          // 퍼플 (최솟값)
-                        'key': { fill: '#fb923c', stroke: '#f97316' },          // 오렌지 (키 값)
-                        'pivot': { fill: '#818cf8', stroke: '#6366f1' },        // 인디고 (피벗)
-                        'merged': { fill: '#34d399', stroke: '#10b981' }        // 에메랄드 (병합됨)
-                    };
+                    const center = Math.min(containerWidth, containerHeight) / 2;
+
+                    // 성능 최적화: 중복 계산 방지
+                    const memoizedColorMap = useMemo(() => ({
+                        'default': { fill: '#60a5fa', stroke: '#3b82f6' },
+                        'comparing': { fill: '#f87171', stroke: '#ef4444' },
+                        'swapped': { fill: '#facc15', stroke: '#eab308' },
+                        'sorted': { fill: '#4ade80', stroke: '#22c55e' },
+                        'min': { fill: '#a78bfa', stroke: '#8b5cf6' },
+                        'key': { fill: '#fb923c', stroke: '#f97316' },
+                        'pivot': { fill: '#818cf8', stroke: '#6366f1' },
+                        'merged': { fill: '#34d399', stroke: '#10b981' }
+                    }), []);
+
+                    const memoizedPlanetStyles = useMemo(() => ({
+                        'default': { strokeWidth: 1.5, pattern: 'plain' },
+                        'comparing': { strokeWidth: 2, pattern: 'ripple', glow: true },
+                        'swapped': { strokeWidth: 2, pattern: 'swirl', glow: true },
+                        'sorted': { strokeWidth: 1.5, pattern: 'rings', glow: false },
+                        'min': { strokeWidth: 2, pattern: 'pulsar', glow: true },
+                        'key': { strokeWidth: 2, pattern: 'corona', glow: true },
+                        'pivot': { strokeWidth: 2.5, pattern: 'saturn', glow: true },
+                        'merged': { strokeWidth: 1.5, pattern: 'neptune', glow: false }
+                    }), []);
                     
                     // 개선된 행성 배치 알고리즘
-                    // 궤도 정렬 방식으로 변경 (더 균일한 분포)
-                    const maxRadius = center * 0.75; // 가용 공간을 조금 더 활용
-                    
-                    // 각 행성 유형별 특성 정의
-                    const planetStyles = {
-                        'default': { 
-                            strokeWidth: 1.5, 
-                            pattern: 'plain'
-                        },
-                        'comparing': { 
-                            strokeWidth: 2, 
-                            pattern: 'ripple',
-                            glow: true
-                        },
-                        'swapped': { 
-                            strokeWidth: 2, 
-                            pattern: 'swirl',
-                            glow: true 
-                        },
-                        'sorted': { 
-                            strokeWidth: 1.5, 
-                            pattern: 'rings',
-                            glow: false
-                        },
-                        'min': { 
-                            strokeWidth: 2, 
-                            pattern: 'pulsar',
-                            glow: true
-                        },
-                        'key': { 
-                            strokeWidth: 2, 
-                            pattern: 'corona',
-                            glow: true
-                        },
-                        'pivot': { 
-                            strokeWidth: 2.5, 
-                            pattern: 'saturn',
-                            glow: true
-                        },
-                        'merged': { 
-                            strokeWidth: 1.5, 
-                            pattern: 'neptune',
-                            glow: false
-                        }
-                    };
+                    const maxRadius = center * 0.75;
 
                     // 데이터 확장: 균일한 궤도 배치로 변경
                     const polarData = dataset.map((d, i) => {
@@ -761,10 +771,9 @@
                             d.state === 'sorted' ? 1.1 : 1.0;
                             
                         const size = (baseSize + valueSize) * stateMultiplier;
-                        
-                        // 행성 스타일 결정
-                        const style = planetStyles[d.state] || planetStyles.default;
-                        const colors = colorMap[d.state] || colorMap.default;
+                          // 행성 스타일 결정 (성능 최적화)
+                        const style = memoizedPlanetStyles[d.state] || memoizedPlanetStyles.default;
+                        const colors = memoizedColorMap[d.state] || memoizedColorMap.default;
                         
                         return {
                             ...d,
@@ -922,16 +931,9 @@
                                         "stroke": {"value": "none"}
                                     }
                                 }
-                            },
-                            {
+                            },                            {
                                 "type": "symbol",
                                 "from": {"data": "planets"},
-                                "transform": [
-                                    {
-                                        "type": "filter",
-                                        "expr": "datum.state === 'comparing' || datum.state === 'swapped' || datum.state === 'pivot'"
-                                    }
-                                ],
                                 "encode": {
                                     "enter": {
                                         "x": {"field": "x"},
@@ -940,7 +942,9 @@
                                     },
                                     "update": {
                                         "fill": {"field": "fill"},
-                                        "fillOpacity": {"value": 0.15},
+                                        "fillOpacity": {
+                                            "signal": "datum.state === 'comparing' || datum.state === 'swapped' || datum.state === 'pivot' ? 0.15 : 0"
+                                        },
                                         "stroke": {"value": "none"}
                                     }
                                 }
@@ -981,30 +985,14 @@
                     if (existingArray) {
                         existingArray.remove();
                     }
-                    
-                    // Vega 시각화 렌더링 (부드러운 애니메이션을 위한 설정)
+                      // Vega 시각화 렌더링 (최적화된 애니메이션)
                     vegaEmbed('#vega-vis', vegaSpec, {
                         actions: false,
                         renderer: 'canvas',
                         tooltip: false,
-                        patch: (spec) => {
-                            // 애니메이션 지연시간 설정
-                            if (spec.marks) {
-                                spec.marks.forEach(mark => {
-                                    if (mark.type === 'symbol' && mark.from && mark.from.data === 'planets') {
-                                        mark.encode.update = {
-                                            ...mark.encode.update,
-                                            // 부드러운 트랜지션 효과
-                                            x: { field: 'x', transition: { duration: 300, ease: 'cubic-in-out' } },
-                                            y: { field: 'y', transition: { duration: 300, ease: 'cubic-in-out' } },
-                                            size: { field: 'size', mult: mark.encode.enter.size.mult, transition: { duration: 200, ease: 'quad-out' } },
-                                            fill: { field: 'fill', transition: { duration: 150, ease: 'linear' } },
-                                            fillOpacity: { field: 'opacity', transition: { duration: 150, ease: 'linear' } }
-                                        };
-                                    }
-                                });
-                            }
-                            return spec;
+                        hover: false,
+                        config: {
+                            autosize: { type: 'fit', contains: 'padding' }
                         }
                     }).then(result => {
                         vegaRef.current = result;
@@ -1013,14 +1001,7 @@
                         const allSorted = data.every(d => d.state === 'sorted');
                         if (allSorted && vegaRef.current) {
                             setTimeout(() => {
-                                const view = vegaRef.current.view;
-                                // 완료 효과를 위한 임시 글로우 추가
-                                view.signal('completionGlow', true);
-                                view.runAsync();
-                                setTimeout(() => {
-                                    view.signal('completionGlow', false);
-                                    view.runAsync();
-                                }, 1000);
+                                console.log('정렬 완료!');
                             }, 500);
                         }
                     }).catch(console.error);
@@ -1163,13 +1144,25 @@
                         [newData[i], newData[j]] = [newData[j], newData[i]];
                     }
                     return newData;
-                }, []);
-
-                useEffect(() => {
+                }, []);                useEffect(() => {
                     setData(generateNewData());
                     return () => {
-                        if (animationRef.current) clearTimeout(animationRef.current);
-                        if (timerRef.current) clearInterval(timerRef.current);
+                        // 메모리 누수 방지를 위한 정리
+                        if (animationRef.current) {
+                            clearTimeout(animationRef.current);
+                            animationRef.current = null;
+                        }
+                        if (timerRef.current) {
+                            clearInterval(timerRef.current);
+                            timerRef.current = null;
+                        }
+                        if (vegaRef?.current?.view) {
+                            try {
+                                vegaRef.current.view.finalize();
+                            } catch (e) {
+                                console.warn('Vega view cleanup warning:', e);
+                            }
+                        }
                     };
                 }, [generateNewData]);
 
@@ -1281,25 +1274,67 @@
                     setTime(0);
                     setData(generateNewData());
                 };
-                
+                  // 키보드 내비게이션 추가
+                useEffect(() => {
+                    const handleKeyPress = (e) => {
+                        if (e.target.tagName === 'INPUT') return; // 슬라이더 사용 중일 때는 무시
+                        
+                        switch (e.key) {
+                            case ' ':
+                            case 'Enter':
+                                e.preventDefault();
+                                handleStartStop();
+                                break;
+                            case 'r':
+                            case 'R':
+                                if (!isSorting) {
+                                    handleReset();
+                                }
+                                break;
+                            case '1':
+                                if (!isSorting) handleAlgorithmChange('bubble');
+                                break;
+                            case '2':
+                                if (!isSorting) handleAlgorithmChange('selection');
+                                break;
+                            case '3':
+                                if (!isSorting) handleAlgorithmChange('insertion');
+                                break;
+                            case '4':
+                                if (!isSorting) handleAlgorithmChange('merge');
+                                break;
+                            case '5':
+                                if (!isSorting) handleAlgorithmChange('quick');
+                                break;
+                        }
+                    };
+                    
+                    document.addEventListener('keydown', handleKeyPress);
+                    return () => document.removeEventListener('keydown', handleKeyPress);
+                }, [isSorting, handleStartStop, handleReset, handleAlgorithmChange]);
+
                 const formatSpeed = (speedValue) => {
                     if (speedValue >= 100) return "느림";
                     if (speedValue >= 50) return "보통";
                     return "빠름";
-                };                return (
-                    <div className="app-wrapper">
+                };return (                    <div className="app-wrapper">
                         <div className="header">
                             <h1 className="title">알고리즘 성운 (Algorithm Nebula)</h1>
                             <p className="subtitle">Vega로 구현한 우주 정렬 알고리즘 시각화</p>
+                            <div style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem'}}>
+                                키보드 단축키: 스페이스바(시작/중지), R(초기화), 1-5(알고리즘 변경)
+                            </div>
                         </div>
-                        
-                        <div className="controls-group">
+                          <div className="controls-group">
                             <div className="control-section">
                                 {Object.keys(algoInfo).map(key => (
                                     <button 
                                         key={key}
                                         className={`algo-button ${algorithm === key ? 'active' : ''}`}
                                         onClick={() => handleAlgorithmChange(key)}
+                                        disabled={isSorting}
+                                        aria-label={`${algoInfo[key].title} 알고리즘 선택`}
+                                        title={`${algoInfo[key].title} - ${algoInfo[key].complexity}`}
                                     >
                                         {key === 'bubble' ? '중력파 정렬' : 
                                          key === 'selection' ? '항성 형성' :
@@ -1311,8 +1346,9 @@
                             
                             <div className="control-section">
                                 <div className="slider-container">
-                                    <span>속도:</span>
+                                    <label htmlFor="speed-slider">속도:</label>
                                     <input 
+                                        id="speed-slider"
                                         type="range"
                                         min="1"
                                         max="100" 
@@ -1320,19 +1356,19 @@
                                         className="slider"
                                         onChange={e => setSpeed(parseInt(e.target.value))}
                                         disabled={isSorting}
+                                        aria-label="애니메이션 속도 조절"
                                     />
-                                    <span className="slider-value">{formatSpeed(speed)}</span>
+                                    <span className="slider-value" aria-live="polite">{formatSpeed(speed)}</span>
                                 </div>
                             </div>
-                        </div>                        <div className="main-layout">
+                        </div><div className="main-layout">
                             <VegaVisualization data={data} algorithm={algorithm} />
                             <InfoCard algo={algorithm} time={time} isSorting={isSorting} />
-                        </div>
-
-                        <div className="actions">
+                        </div>                        <div className="actions">
                             <button 
                                 className={`button ${isSorting ? 'primary-button running' : 'primary-button'}`}
                                 onClick={handleStartStop}
+                                aria-label={isSorting ? '정렬 중지' : '정렬 시작'}
                             >
                                 {isSorting ? '중지' : '시작'}
                             </button>
@@ -1340,6 +1376,7 @@
                                 className="button secondary-button" 
                                 onClick={handleReset}
                                 disabled={isSorting}
+                                aria-label="데이터 초기화"
                             >
                                 초기화
                             </button>

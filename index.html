@@ -1110,8 +1110,8 @@
                         // 데이터 요소에 대한 그룹
                         const nodesGroup = svg.append("g")
                             .attr("transform", `translate(${centerX}, ${centerY})`);
-
-                                          // 노드 위치 계산
+                        
+                        // 노드 위치 계산
                         const angleScale = d3.scaleLinear()
                             .domain([0, data.length])
                             .range([0, Math.PI * 2]);
@@ -1156,12 +1156,12 @@
                             .attr("dy", ".3em")
                             .text(d => d.value);
                     } else {
-                        // 비재귀적 알고리즘을 위한 나선형 시각화 (크기 키움)
+                        // 비재귀적 알고리즘을 위한 나선형 시각화 (크기 두 배로 키움)
                         const spiralGroup = svg.append("g")
                             .attr("transform", `translate(${centerX}, ${centerY})`);
                         
-                        // 나선 간격 계산 - 더 큰 간격으로 변경
-                        const spiralStep = 30; // 값 증가: 15 -> 30
+                        // 나선 간격 계산 - 두 배로 키움
+                        const spiralStep = 60; // 값 증가: 30 -> 60
                         const spiralB = spiralStep / (2 * Math.PI);
                         
                         // 상태에 따른 색상 매핑
@@ -1174,7 +1174,7 @@
                             'default': '#3C6CDF'     // 파랑
                         };
                         
-                        // 나선형 경로 그리기 - 더 두껍고 명확하게
+                        // 나선형 경로 그리기 - 더 흐리게 설정
                         const spiral = d3.lineRadial()
                             .angle(d => d)
                             .radius(d => spiralB * d);
@@ -1185,9 +1185,9 @@
                             .datum(spiralPoints)
                             .attr("d", spiral)
                             .attr("fill", "none")
-                            .attr("stroke", "rgba(255,255,255,0.3)") // 투명도 증가
-                            .attr("stroke-width", 1.5) // 두께 증가
-                            .attr("stroke-dasharray", "5,3"); // 대시 패턴 변경
+                            .attr("stroke", "rgba(255,255,255,0.1)") // 투명도 더 낮춤: 0.3 -> 0.1
+                            .attr("stroke-width", 1) // 두께 감소: 1.5 -> 1
+                            .attr("stroke-dasharray", "5,5"); // 대시 패턴 변경
                         
                         // 데이터를 나선형으로 배치
                         const nodes = spiralGroup.selectAll(".node")
@@ -1201,20 +1201,20 @@
                                 return `translate(${radius * Math.cos(angle)}, ${radius * Math.sin(angle)})`;
                             });
                         
-                        // 노드 원 그리기 - 크기 약간 키움
+                        // 노드 원 그리기 - 크기 키움
                         nodes.append("circle")
                             .attr("class", "node")
-                            .attr("r", d => 6 + (d.value / N) * 16) // 크기 증가
+                            .attr("r", d => 8 + (d.value / N) * 18) // 크기 키움: 6+16 -> 8+18
                             .attr("fill", d => stateColor[d.state] || stateColor.default)
-                            .attr("opacity", 0.85) // 투명도 약간 감소
+                            .attr("opacity", 0.85)
                             .attr("filter", d => d.state !== 'default' ? 
                                   `drop-shadow(0 0 5px ${stateColor[d.state]})` : 'none');
                         
-                        // 노드 값 텍스트 - 약간 키움
+                        // 노드 값 텍스트 - 더 키움
                         nodes.append("text")
                             .attr("class", "node-label")
                             .attr("dy", ".3em")
-                            .attr("font-size", "10px") // 글자 크기 증가
+                            .attr("font-size", "11px") // 글자 크기 키움: 10px -> 11px
                             .text(d => d.value);
                     }
                     
@@ -1433,7 +1433,7 @@
                 };
 
                 return (
-                                        <div className="nebula-wrapper">
+                    <div className="nebula-wrapper">
                         <header className="header">
                             <h1 className="title">성운의 조율</h1>
                             <p className="subtitle">다양한 정렬 알고리즘의 작동 원리를 우주의 성운처럼 시각화합니다</p>

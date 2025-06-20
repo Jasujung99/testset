@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수정 동굴의 분자화 (React)</title>
+    <!-- React, Babel, D3, Styled-components 로드 -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/styled-components@5.3.11/dist/styled-components.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            background-color: #111827;
+            color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- 모든 라이브러리 로드 후 앱 실행을 위한 래퍼 함수 ---
+        function runWhenReady() {
+            const { useState, useEffect, useRef, useCallback } = React;
+            const { createRoot } = ReactDOM;
+            const styled = window.styled;
+
+            // --- Styled-components (CSS-in-JS) ---
+            const AppWrapper = styled.div`
+                width: 100%;
+                max-width: 1200px;
+                background-color: #1f2937;
+                border-radius: 12px;
+                padding: 2rem;
+                border: 1px solid #374151;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            `;
+
+            const Header = styled.header`
+                text-align: center;
+                margin-bottom: 2rem;
+            `;
+            
+            const Title = styled.h1`
+                font-size: 2.25rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+                color: #f9fafb;
+            `;
+
+            const Subtitle = styled.p`
+                color: #9ca3af;
+            `;
+            
+            const Controls = styled.div`
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem;
+                margin-bottom: 1.5rem;
+                background-color: #111827;
+                padding: 0.5rem;
+                border-radius: 8px;
+            `;
+
+            const Button = styled.button`
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                border-radius: 6px;
+                border: none;
+                cursor: pointer;
+                transition: background-color 0.2s, color 0.2s;
+                background-color: #374151;
+                color: #d1d5db;
+
+                &:disabled {
+                    background-color: #4b5563;
+                    cursor: not-allowed;
+                    opacity: 0.5;
+                }
+            `;
+            
+            const AlgoButton = styled(Button)`
+                ${({ active }) => active && `
+                    background-color: #4f46e5;
+                    color: white;
+                    font-weight: 700;
+                `}
+            `;
+
+            const MainLayout = styled.main`
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+                @media (min-width: 992px) {
+                    grid-template-columns: 2fr 1fr;
+                }
+            `;
+
+            const VisContainer = styled.div`
+                position: relative;
+                background-color: #111827;
+                min-height: 50vh;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            
+            const InfoCardWrapper = styled.div`
+                background-color: #111827;
+                padding: 1.5rem;
+                border-radius: 8px;
+                display: flex;
+                flex-direction: column;
+            `;
+
+            const InfoTitle = styled.h2`
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: #818cf8;
+                margin-bottom: 1rem;
+            `;
+
+            const InfoTimer = styled.div`
+                margin-bottom: 1rem;
+                font-size: 1.1rem;
+            `;
+            
+            const InfoTimerValue = styled.span`
+                font-weight: 700;
+                color: #facc15;
+            `;
+
+            const InfoHeading = styled.h3`
+                font-weight: 700;
+                color: #f9fafb;
+                border-left: 3px solid #818cf8;
+                padding-left: 0.75rem;
+                margin-bottom: 0.5rem;
+            `;
+
+            const InfoText = styled.p`
+                color: #9ca3af;
+                font-size: 0.875rem;
+                margin-bottom: 1rem;
+            `;
+            
+            const Actions = styled.div`
+                display: flex;
+                justify-content: center;
+                gap: 1rem;
+                margin-top: 1.5rem;
+            `;
+
+            const PrimaryButton = styled(Button)`
+                background-color: #4f46e5;
+                color: white;
+                font-weight: 700;
+                padding: 0.75rem 2rem;
+                &:hover:not(:disabled) { background-color: #4338ca; }
+            `;
+
+            const SecondaryButton = styled(Button)`
+                background-color: #4b5563;
+                color: white;
+                padding: 0.75rem 2rem;
+                &:hover:not(:disabled) { background-color: #6b7280; }
+            `;
+
+            const N = 30;
+            const infoContent = {
+                bubble: { title: '지하수 (버블 정렬)', concept: '이웃한 두 수정을 비교하여 순서가 잘못되었을 경우 서로의 길이를 바꿉니다. 이 변화의 파동이 동굴 벽을 따라 한 바퀴 돕니다.', bigO: 'O(n²)', features: '가장 이해하기 쉽고 직관적인 방식이지만, 데이터가 많아질수록 성능이 급격히 저하됩니다.' },
+                selection: { title: '결정 성장 (선택 정렬)', concept: '전체 수정 중에서 가장 길게 자라나야 할 것을 찾아, 그 길이로 즉시 확정시킵니다. 이 과정을 반복하며 질서를 완성합니다.', bigO: 'O(n²)', features: '데이터가 어떻게 섞여있든 항상 일정한 성능을 보입니다. 교환 횟수가 적다는 장점이 있습니다.' },
+                insertion: { title: '동기화 (삽입 정렬)', concept: '하나의 수정을 선택하고, 이미 정렬된 이웃 수정들과 길이를 비교하며 자신의 올바른 위치로 미끄러져 들어가 자라납니다.', bigO: 'O(n²)', features: '데이터가 거의 정렬되어 있는 상태일 경우, 어떤 알고리즘보다도 빠른 놀라운 성능을 보입니다.' }
+            };
+
+            // --- 정렬 알고리즘 생성기 (컴포넌트 외부로 이동) ---
+            function* bubbleSort(arr) { let a = JSON.parse(JSON.stringify(arr)); for(let i = 0; i < a.length; i++) { for (let j = 0; j < a.length - i - 1; j++) { a.forEach(d => { if(d.state !== 'sorted') d.state = 'default'}); a[j].state = 'comparing'; a[j+1].state = 'comparing'; yield a; if (a[j].value > a[j+1].value) { [a[j], a[j+1]] = [a[j+1], a[j]]; a[j].state = 'swapped'; a[j+1].state = 'swapped'; yield a; } } a[a.length - 1 - i].state = 'sorted'; } a.forEach(d => d.state = 'sorted'); yield a; }
+            function* selectionSort(arr) { let a = JSON.parse(JSON.stringify(arr)); for(let i = 0; i < a.length - 1; i++) { let min_idx = i; a.forEach((d, k) => d.state = k < i ? 'sorted' : 'default'); a[min_idx].state = 'min'; yield a; for (let j = i + 1; j < a.length; j++) { a[j].state = 'comparing'; yield a; if (a[j].value < a[min_idx].value) { a[min_idx].state = 'default'; min_idx = j; a[min_idx].state = 'min'; } if(a[j].state !== 'min') a[j].state = 'default'; } if (min_idx !== i) { a[min_idx].state = 'swapped'; a[i].state = 'swapped'; yield a; [a[i], a[min_idx]] = [a[min_idx], a[i]]; } a[i].state = 'sorted'; yield a; } a[a.length - 1].state = 'sorted'; yield a; }
+            function* insertionSort(arr) { let a = JSON.parse(JSON.stringify(arr)); a[0].state = 'sorted'; for(let i = 1; i < a.length; i++) { let key = a[i]; let j = i - 1; a.forEach((d, k) => d.state = k < i ? 'sorted' : 'default'); key.state = 'key'; yield a; while (j >= 0 && a[j].value > key.value) { a[j+1] = a[j]; j--; } a[j+1] = key; yield a; } a.forEach(d => d.state = 'sorted'); yield a; }
+
+            const sortGenerators = { bubble: bubbleSort, selection: selectionSort, insertion: insertionSort };
+
+            // --- React Components ---
+            const Visualization = ({ data }) => {
+                const svgRef = useRef();
+                const containerRef = useRef();
+
+                useEffect(() => {
+                    if (!data || data.length === 0 || !containerRef.current) return;
+
+                    const containerEl = containerRef.current;
+                    const width = containerEl.clientWidth;
+                    const height = containerEl.clientHeight;
+
+                    const svg = d3.select(svgRef.current)
+                        .attr("width", width)
+                        .attr("height", height);
+                    
+                    const g = svg.selectAll("g").data([null]).join("g")
+                        .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+                    const maxRadius = Math.min(width, height) / 2 - 20;
+                    const angleScale = d3.scaleLinear().domain([0, N]).range([0, 2 * Math.PI]);
+                    const lengthScale = d3.scaleLinear().domain([0, N]).range([10, maxRadius - 20]);
+                    const arcGenerator = d3.arc()
+                        .outerRadius(maxRadius)
+                        .innerRadius(d => maxRadius - lengthScale(d.data.value))
+                        .startAngle((d) => angleScale(d.index))
+                        .endAngle((d) => angleScale(d.index + 1))
+                        .padAngle(0.02)
+                        .padRadius(maxRadius);
+                    
+                    const pieData = d3.pie().value(() => 1).sort(null)(data);
+                    const colorScale = d3.scaleSequential(d3.interpolateCool).domain([N, 1]);
+                    const stateColor = d3.scaleOrdinal()
+                        .domain(['comparing', 'swapped', 'key', 'min'])
+                        .range(['#F56565', '#ED8936', '#ECC94B', '#ED64A6']);
+
+                    g.selectAll("path").data(pieData, d => d.data.id)
+                        .join(
+                            enter => enter.append("path")
+                                .attr("d", arcGenerator)
+                                .attr("fill", d => stateColor(d.data.state) || colorScale(d.data.value)),
+                            update => update.transition().duration(75)
+                                .attr("d", arcGenerator)
+                                .attr("fill", d => stateColor(d.data.state) || colorScale(d.data.value)),
+                            exit => exit.remove()
+                        );
+                }, [data]);
+
+                return <VisContainer ref={containerRef}><svg ref={svgRef}></svg></VisContainer>;
+            };
+            
+            const InfoCard = ({ algo, time }) => {
+                const content = infoContent[algo];
+                return (
+                    <InfoCardWrapper>
+                        <InfoTitle>{content.title}</InfoTitle>
+                        <InfoTimer>걸린 시간: <InfoTimerValue>{time.toFixed(2)} 초</InfoTimerValue></InfoTimer>
+                        <div>
+                            <InfoHeading>핵심 원리</InfoHeading>
+                            <InfoText>{content.concept}</InfoText>
+                            <InfoHeading>시간 복잡도</InfoHeading>
+                            <InfoText style={{fontFamily: 'monospace'}}>{content.bigO}</InfoText>
+                            <InfoHeading>특징</InfoHeading>
+                            <InfoText>{content.features}</InfoText>
+                        </div>
+                    </InfoCardWrapper>
+                );
+            };
+
+            function App() {
+                const [data, setData] = useState([]);
+                const [algorithm, setAlgorithm] = useState('bubble');
+                const [isSorting, setIsSorting] = useState(false);
+                const [time, setTime] = useState(0);
+                
+                const animationTimeoutRef = useRef();
+                const timerRef = useRef();
+
+                const generateNewData = useCallback(() => {
+                    return d3.shuffle(d3.range(1, N + 1)).map((d, i) => ({ value: d, id: i, state: 'default' }));
+                }, []);
+
+                useEffect(() => {
+                    setData(generateNewData());
+                }, [generateNewData]);
+                
+                const handleReset = useCallback(() => {
+                    clearTimeout(animationTimeoutRef.current);
+                    clearInterval(timerRef.current);
+                    setIsSorting(false);
+                    setTime(0);
+                    setData(generateNewData());
+                }, [generateNewData]);
+                
+                const handleStart = () => {
+                    const generator = sortGenerators[algorithm]([...data]);
+                    setIsSorting(true);
+                    const startTime = performance.now();
+
+                    timerRef.current = setInterval(() => {
+                        setTime((performance.now() - startTime) / 1000);
+                    }, 10);
+
+                    function animate() {
+                        const result = generator.next();
+                        if (!result.done) {
+                            setData(result.value);
+                            animationTimeoutRef.current = setTimeout(animate, 75);
+                        } else {
+                            clearInterval(timerRef.current);
+                            setIsSorting(false);
+                            setData(result.value);
+                        }
+                    }
+                    animate();
+                };
+
+                return (
+                    <AppWrapper>
+                        <Header>
+                            <Title>수정 동굴의 분자화</Title>
+                            <Subtitle>React와 CSS-in-JS로 재구성한 알고리즘</Subtitle>
+                        </Header>
+                        
+                        <Controls>
+                            {Object.keys(infoContent).map(key => (
+                                <AlgoButton 
+                                    key={key}
+                                    active={algorithm === key}
+                                    disabled={isSorting}
+                                    onClick={() => {
+                                        setAlgorithm(key);
+                                        handleReset();
+                                    }}
+                                >
+                                    {infoContent[key].title}
+                                </AlgoButton>
+                            ))}
+                        </Controls>
+
+                        <MainLayout>
+                            <Visualization data={data} />
+                            <InfoCard algo={algorithm} time={time} />
+                        </MainLayout>
+
+                        <Actions>
+                            <PrimaryButton onClick={handleStart} disabled={isSorting}>시작</PrimaryButton>
+                            <SecondaryButton onClick={handleReset} disabled={isSorting}>초기화</SecondaryButton>
+                        </Actions>
+                    </AppWrapper>
+                );
+            }
+
+            const container = document.getElementById('root');
+            const root = createRoot(container);
+            root.render(<App />);
+        }
+        
+        // --- 오류 수정의 핵심 부분 ---
+        // 모든 라이브러리가 로드되었는지 주기적으로 확인
+        const readyCheck = setInterval(() => {
+            if (window.React && window.ReactDOM && window.Babel && window.d3 && window.styled) {
+                clearInterval(readyCheck);
+                runWhenReady();
+            }
+        }, 100);
+
+    </script>
+</body>
+</html>

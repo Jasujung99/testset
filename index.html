@@ -117,7 +117,7 @@
             background-color: rgba(13, 42, 92, 0.8);
             color: var(--text-muted);
             position: relative;
-            overflow: hidden;
+            overflow: visible;  /* 변경: 버튼 밖으로 뱃지가 나갈 수 있도록 */
         }
         
         .algo-button::before {
@@ -166,9 +166,9 @@
         
         .complexity-badge {
             position: absolute;
-            top: -8px;
-            right: -8px;
-            background-color: rgba(0, 0, 0, 0.6);
+            top: -10px;
+            right: -10px;
+            background-color: rgba(0, 0, 0, 0.7);
             border-radius: 12px;
             padding: 2px 8px;
             font-size: 0.7rem;
@@ -176,6 +176,8 @@
             opacity: 0;
             transform: scale(0.8);
             transition: all 0.3s ease;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
         
         .algo-button:hover .complexity-badge,
@@ -502,7 +504,7 @@
         
         .star {
             fill: white;
-            opacity: 0.7;
+            opacity: 0.2; /* 별 투명도 크게 낮춤 */
         }
         
         .node-orbit {
@@ -1066,28 +1068,6 @@
                     // 이전 요소 제거
                     svg.selectAll("*").remove();
                     
-                    // 배경 그룹
-                    const background = svg.append("g").attr("class", "background");
-                    
-                    // 배경에 별 생성
-                    const starCount = 100;
-                    const stars = Array.from({ length: starCount }, () => ({
-                        x: Math.random() * width,
-                        y: Math.random() * height,
-                        r: Math.random() * 1.5 + 0.5
-                    }));
-                    
-                    background.selectAll(".star")
-                        .data(stars)
-                        .enter()
-                        .append("circle")
-                        .attr("class", "star")
-                        .attr("cx", d => d.x)
-                        .attr("cy", d => d.y)
-                        .attr("r", d => d.r)
-                        .attr("fill", "white")
-                        .attr("opacity", () => Math.random() * 0.5 + 0.3);
-                    
                     // 메인 시각화
                     const centerX = width / 2;
                     const centerY = height / 2;
@@ -1130,8 +1110,8 @@
                         // 데이터 요소에 대한 그룹
                         const nodesGroup = svg.append("g")
                             .attr("transform", `translate(${centerX}, ${centerY})`);
-                        
-                        // 노드 위치 계산
+
+                                          // 노드 위치 계산
                         const angleScale = d3.scaleLinear()
                             .domain([0, data.length])
                             .range([0, Math.PI * 2]);
@@ -1176,12 +1156,12 @@
                             .attr("dy", ".3em")
                             .text(d => d.value);
                     } else {
-                        // 비재귀적 알고리즘을 위한 나선형 시각화
+                        // 비재귀적 알고리즘을 위한 나선형 시각화 (크기 키움)
                         const spiralGroup = svg.append("g")
                             .attr("transform", `translate(${centerX}, ${centerY})`);
                         
-                        // 나선 간격 계산
-                        const spiralStep = 15;
+                        // 나선 간격 계산 - 더 큰 간격으로 변경
+                        const spiralStep = 30; // 값 증가: 15 -> 30
                         const spiralB = spiralStep / (2 * Math.PI);
                         
                         // 상태에 따른 색상 매핑
@@ -1193,6 +1173,21 @@
                             'sorted': '#57CBFF',     // 하늘
                             'default': '#3C6CDF'     // 파랑
                         };
+                        
+                        // 나선형 경로 그리기 - 더 두껍고 명확하게
+                        const spiral = d3.lineRadial()
+                            .angle(d => d)
+                            .radius(d => spiralB * d);
+                        
+                        const spiralPoints = Array.from({ length: data.length * 3 }, (_, i) => i * 0.1);
+                        
+                        spiralGroup.append("path")
+                            .datum(spiralPoints)
+                            .attr("d", spiral)
+                            .attr("fill", "none")
+                            .attr("stroke", "rgba(255,255,255,0.3)") // 투명도 증가
+                            .attr("stroke-width", 1.5) // 두께 증가
+                            .attr("stroke-dasharray", "5,3"); // 대시 패턴 변경
                         
                         // 데이터를 나선형으로 배치
                         const nodes = spiralGroup.selectAll(".node")
@@ -1206,35 +1201,21 @@
                                 return `translate(${radius * Math.cos(angle)}, ${radius * Math.sin(angle)})`;
                             });
                         
-                        // 노드 원 그리기
+                        // 노드 원 그리기 - 크기 약간 키움
                         nodes.append("circle")
                             .attr("class", "node")
-                            .attr("r", d => 5 + (d.value / N) * 15)
+                            .attr("r", d => 6 + (d.value / N) * 16) // 크기 증가
                             .attr("fill", d => stateColor[d.state] || stateColor.default)
-                            .attr("opacity", 0.8)
+                            .attr("opacity", 0.85) // 투명도 약간 감소
                             .attr("filter", d => d.state !== 'default' ? 
                                   `drop-shadow(0 0 5px ${stateColor[d.state]})` : 'none');
                         
-                        // 노드 값 텍스트
+                        // 노드 값 텍스트 - 약간 키움
                         nodes.append("text")
                             .attr("class", "node-label")
                             .attr("dy", ".3em")
+                            .attr("font-size", "10px") // 글자 크기 증가
                             .text(d => d.value);
-                        
-                        // 나선형 경로 그리기
-                        const spiral = d3.lineRadial()
-                            .angle(d => d)
-                            .radius(d => spiralB * d);
-                        
-                        const spiralPoints = Array.from({ length: data.length * 3 }, (_, i) => i * 0.1);
-                        
-                        spiralGroup.append("path")
-                            .datum(spiralPoints)
-                            .attr("d", spiral)
-                            .attr("fill", "none")
-                            .attr("stroke", "rgba(255,255,255,0.2)")
-                            .attr("stroke-width", 1)
-                            .attr("stroke-dasharray", "3,3");
                     }
                     
                     // 배열 시각화를 위한 컨테이너
@@ -1452,10 +1433,10 @@
                 };
 
                 return (
-                    <div className="nebula-wrapper">
+                                        <div className="nebula-wrapper">
                         <header className="header">
                             <h1 className="title">성운의 조율</h1>
-                                                        <p className="subtitle">다양한 정렬 알고리즘의 작동 원리를 우주의 성운처럼 시각화합니다</p>
+                            <p className="subtitle">다양한 정렬 알고리즘의 작동 원리를 우주의 성운처럼 시각화합니다</p>
                         </header>
                         
                         <div className="controls">

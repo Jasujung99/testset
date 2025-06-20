@@ -9,8 +9,6 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <!-- styled-components 버전 변경 및 로드 방식 수정 -->
-    <script src="https://unpkg.com/styled-components@5.3.6/dist/styled-components.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -24,161 +22,188 @@
             padding: 1rem;
             margin: 0;
         }
+        
+        /* styled-components를 일반 CSS로 변환 */
+        .app-wrapper {
+            width: 100%;
+            max-width: 1200px;
+            background-color: #1f2937;
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid #374151;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #f9fafb;
+        }
+        
+        .subtitle {
+            color: #9ca3af;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background-color: #111827;
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+        
+        .button {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            background-color: #374151;
+            color: #d1d5db;
+        }
+        
+        .button:disabled {
+            background-color: #4b5563;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .algo-button {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            background-color: #374151;
+            color: #d1d5db;
+        }
+        
+        .algo-button:disabled {
+            background-color: #4b5563;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .algo-button.active {
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 700;
+        }
+        
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (min-width: 992px) {
+            .main-layout {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+        
+        .vis-container {
+            position: relative;
+            background-color: #111827;
+            min-height: 50vh;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .info-card-wrapper {
+            background-color: #111827;
+            padding: 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #818cf8;
+            margin-bottom: 1rem;
+        }
+        
+        .info-timer {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .info-timer-value {
+            font-weight: 700;
+            color: #facc15;
+        }
+        
+        .info-heading {
+            font-weight: 700;
+            color: #f9fafb;
+            border-left: 3px solid #818cf8;
+            padding-left: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-text {
+            color: #9ca3af;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .primary-button {
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 700;
+            padding: 0.75rem 2rem;
+        }
+        
+        .primary-button:hover:not(:disabled) {
+            background-color: #4338ca;
+        }
+        
+        .secondary-button {
+            background-color: #4b5563;
+            color: white;
+            padding: 0.75rem 2rem;
+        }
+        
+        .secondary-button:hover:not(:disabled) {
+            background-color: #6b7280;
+        }
+        
+        /* 파비콘 오류 방지용 */
+        link[rel="icon"] {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        // --- 모든 라이브러리 로드 후 앱 실행을 위한 래퍼 함수 ---
+        // React 컴포넌트 및 앱 로직
         function runWhenReady() {
             const { useState, useEffect, useRef, useCallback } = React;
             const { createRoot } = ReactDOM;
-            // styled-components 접근 방식 수정
-            const styled = window.styled ? window.styled : window.styled.default;
-
-            // --- Styled-components (CSS-in-JS) ---
-            const AppWrapper = styled.div`
-                width: 100%;
-                max-width: 1200px;
-                background-color: #1f2937;
-                border-radius: 12px;
-                padding: 2rem;
-                border: 1px solid #374151;
-                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            `;
-
-            const Header = styled.header`
-                text-align: center;
-                margin-bottom: 2rem;
-            `;
-            
-            const Title = styled.h1`
-                font-size: 2.25rem;
-                font-weight: 700;
-                margin-bottom: 0.5rem;
-                color: #f9fafb;
-            `;
-
-            const Subtitle = styled.p`
-                color: #9ca3af;
-            `;
-            
-            const Controls = styled.div`
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 0.5rem;
-                margin-bottom: 1.5rem;
-                background-color: #111827;
-                padding: 0.5rem;
-                border-radius: 8px;
-            `;
-
-            const Button = styled.button`
-                padding: 0.5rem 1rem;
-                font-size: 0.9rem;
-                border-radius: 6px;
-                border: none;
-                cursor: pointer;
-                transition: background-color 0.2s, color 0.2s;
-                background-color: #374151;
-                color: #d1d5db;
-
-                &:disabled {
-                    background-color: #4b5563;
-                    cursor: not-allowed;
-                    opacity: 0.5;
-                }
-            `;
-            
-            const AlgoButton = styled(Button)`
-                ${({ active }) => active && `
-                    background-color: #4f46e5;
-                    color: white;
-                    font-weight: 700;
-                `}
-            `;
-
-            const MainLayout = styled.main`
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-                @media (min-width: 992px) {
-                    grid-template-columns: 2fr 1fr;
-                }
-            `;
-
-            const VisContainer = styled.div`
-                position: relative;
-                background-color: #111827;
-                min-height: 50vh;
-                border-radius: 8px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            `;
-            
-            const InfoCardWrapper = styled.div`
-                background-color: #111827;
-                padding: 1.5rem;
-                border-radius: 8px;
-                display: flex;
-                flex-direction: column;
-            `;
-
-            const InfoTitle = styled.h2`
-                font-size: 1.5rem;
-                font-weight: 700;
-                color: #818cf8;
-                margin-bottom: 1rem;
-            `;
-
-            const InfoTimer = styled.div`
-                margin-bottom: 1rem;
-                font-size: 1.1rem;
-            `;
-            
-            const InfoTimerValue = styled.span`
-                font-weight: 700;
-                color: #facc15;
-            `;
-
-            const InfoHeading = styled.h3`
-                font-weight: 700;
-                color: #f9fafb;
-                border-left: 3px solid #818cf8;
-                padding-left: 0.75rem;
-                margin-bottom: 0.5rem;
-            `;
-
-            const InfoText = styled.p`
-                color: #9ca3af;
-                font-size: 0.875rem;
-                margin-bottom: 1rem;
-            `;
-            
-            const Actions = styled.div`
-                display: flex;
-                justify-content: center;
-                gap: 1rem;
-                margin-top: 1.5rem;
-            `;
-
-            const PrimaryButton = styled(Button)`
-                background-color: #4f46e5;
-                color: white;
-                font-weight: 700;
-                padding: 0.75rem 2rem;
-                &:hover:not(:disabled) { background-color: #4338ca; }
-            `;
-
-            const SecondaryButton = styled(Button)`
-                background-color: #4b5563;
-                color: white;
-                padding: 0.75rem 2rem;
-                &:hover:not(:disabled) { background-color: #6b7280; }
-            `;
 
             const N = 30;
             const infoContent = {
@@ -332,27 +357,27 @@
                 }, [data]);
 
                 return (
-                    <VisContainer ref={containerRef}>
+                    <div className="vis-container" ref={containerRef}>
                         <svg ref={svgRef}></svg>
-                    </VisContainer>
+                    </div>
                 );
             };
             
             const InfoCard = ({ algo, time }) => {
                 const content = infoContent[algo];
                 return (
-                    <InfoCardWrapper>
-                        <InfoTitle>{content.title}</InfoTitle>
-                        <InfoTimer>걸린 시간: <InfoTimerValue>{time.toFixed(2)} 초</InfoTimerValue></InfoTimer>
+                    <div className="info-card-wrapper">
+                        <h2 className="info-title">{content.title}</h2>
+                        <div className="info-timer">걸린 시간: <span className="info-timer-value">{time.toFixed(2)} 초</span></div>
                         <div>
-                            <InfoHeading>핵심 원리</InfoHeading>
-                            <InfoText>{content.concept}</InfoText>
-                            <InfoHeading>시간 복잡도</InfoHeading>
-                            <InfoText style={{fontFamily: 'monospace'}}>{content.bigO}</InfoText>
-                            <InfoHeading>특징</InfoHeading>
-                            <InfoText>{content.features}</InfoText>
+                            <h3 className="info-heading">핵심 원리</h3>
+                            <p className="info-text">{content.concept}</p>
+                            <h3 className="info-heading">시간 복잡도</h3>
+                            <p className="info-text" style={{fontFamily: 'monospace'}}>{content.bigO}</p>
+                            <h3 className="info-heading">특징</h3>
+                            <p className="info-text">{content.features}</p>
                         </div>
-                    </InfoCardWrapper>
+                    </div>
                 );
             };
 
@@ -429,17 +454,17 @@
                 };
 
                 return (
-                    <AppWrapper>
-                        <Header>
-                            <Title>수정 동굴의 분자화</Title>
-                            <Subtitle>React와 CSS-in-JS로 재구성한 알고리즘</Subtitle>
-                        </Header>
+                    <div className="app-wrapper">
+                        <header className="header">
+                            <h1 className="title">수정 동굴의 분자화</h1>
+                            <p className="subtitle">React로 재구성한 알고리즘</p>
+                        </header>
                         
-                        <Controls>
+                        <div className="controls">
                             {Object.keys(infoContent).map(key => (
-                                <AlgoButton 
+                                <button 
                                     key={key}
-                                    active={algorithm === key}
+                                    className={`algo-button ${algorithm === key ? 'active' : ''}`}
                                     disabled={isSorting}
                                     onClick={() => {
                                         if (isSorting) return;
@@ -448,20 +473,32 @@
                                     }}
                                 >
                                     {infoContent[key].title}
-                                </AlgoButton>
+                                </button>
                             ))}
-                        </Controls>
+                        </div>
 
-                        <MainLayout>
+                        <main className="main-layout">
                             <Visualization data={data} />
                             <InfoCard algo={algorithm} time={time} />
-                        </MainLayout>
+                        </main>
 
-                        <Actions>
-                            <PrimaryButton onClick={handleStart} disabled={isSorting}>시작</PrimaryButton>
-                            <SecondaryButton onClick={handleReset} disabled={isSorting}>초기화</SecondaryButton>
-                        </Actions>
-                    </AppWrapper>
+                        <div className="actions">
+                            <button 
+                                className="button primary-button" 
+                                onClick={handleStart} 
+                                disabled={isSorting}
+                            >
+                                시작
+                            </button>
+                            <button 
+                                className="button secondary-button" 
+                                onClick={handleReset} 
+                                disabled={isSorting}
+                            >
+                                초기화
+                            </button>
+                        </div>
+                    </div>
                 );
             }
 
@@ -470,22 +507,17 @@
             root.render(<App />);
         }
         
-        // --- 오류 수정의 핵심 부분 ---
-        // 라이브러리 로드 확인 및 오류 처리
+        // 라이브러리 로드 확인 및 오류 처리 개선
         let attempts = 0;
         const maxAttempts = 50;
         
         const readyCheck = setInterval(() => {
             attempts++;
             try {
-                if (
-                    window.React && 
-                    window.ReactDOM && 
-                    window.ReactDOM.createRoot && 
-                    window.d3 && 
-                    (window.styled || (window.styled && window.styled.default))
-                ) {
+                // styled-components 의존성 제거
+                if (window.React && window.ReactDOM && window.ReactDOM.createRoot && window.d3) {
                     clearInterval(readyCheck);
+                    console.log("라이브러리 로드 완료, 애플리케이션 시작");
                     runWhenReady();
                 } else if (attempts >= maxAttempts) {
                     clearInterval(readyCheck);
@@ -493,7 +525,12 @@
                         '<div style="color: white; text-align: center; padding: 20px;">' +
                         '<h2>라이브러리 로드 중 오류가 발생했습니다.</h2>' +
                         '<p>페이지를 새로고침하거나 다른 브라우저에서 시도해 주세요.</p>' +
-                        '</div>';
+                        '<p>오류 상세: ' + 
+                        (window.React ? '✓' : '✗') + ' React, ' + 
+                        (window.ReactDOM ? '✓' : '✗') + ' ReactDOM, ' + 
+                        (window.ReactDOM && window.ReactDOM.createRoot ? '✓' : '✗') + ' createRoot, ' + 
+                        (window.d3 ? '✓' : '✗') + ' D3' + 
+                        '</p></div>';
                 }
             } catch (error) {
                 console.error("라이브러리 체크 중 오류:", error);

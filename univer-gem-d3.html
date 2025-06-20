@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>알고리즘 성운 (Algorithm Nebula)</title>
+    <!-- React, Babel, D3 라이브러리 로드 -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep-space: #0c0a1a;
+            --bg-space: #111827;
+            --bg-nebula: #1f2937;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --accent-purple: #818cf8;
+            --accent-blue: #60a5fa;
+            --accent-yellow: #facc15;
+            --accent-red: #f87171;
+            --accent-green: #4ade80;
+        }
+        body { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            background-color: var(--bg-deep-space);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+            margin: 0;
+        }
+        .app-wrapper {
+            width: 100%;
+            max-width: 1400px;
+            background-color: var(--bg-space);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid #374151;
+            box-shadow: 0 0 50px -10px rgba(129, 140, 248, 0.2);
+        }
+        .header { text-align: center; margin-bottom: 1.5rem; }
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle { color: var(--text-secondary); }
+        .controls-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background-color: var(--bg-deep-space);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .control-section { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+        .button, .algo-button {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: #374151;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        .algo-button.active {
+            background-color: var(--accent-purple);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px -5px rgba(129, 140, 248, 0.4);
+        }
+        .slider-container { display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); font-size: 0.9rem; }
+        .slider { accent-color: var(--accent-purple); }
+        .slider-value { color: var(--text-primary); font-weight: 700; min-width: 25px; }
+        .main-layout { display: grid; grid-template-columns: 1fr; md:grid-template-columns: 3fr 1fr; gap: 1.5rem; }
+        @media (min-width: 768px) {
+            .main-layout { grid-template-columns: 3fr 1fr; }
+        }
+        .vis-container {
+            position: relative;
+            background: radial-gradient(circle, #2d3748 0%, var(--bg-deep-space) 70%);
+            min-height: 60vh;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .info-card-wrapper { background-color: var(--bg-nebula); padding: 1.5rem; border-radius: 8px; }
+        .info-title { font-size: 1.5rem; font-weight: 700; color: var(--accent-blue); margin-bottom: 1rem; }
+        .info-timer { margin-bottom: 1rem; font-size: 1.1rem; color: var(--text-secondary); }
+        .timer-value { font-weight: 700; color: var(--accent-yellow); font-family: monospace; }
+        .info-heading { font-weight: 700; color: var(--text-primary); border-left: 3px solid var(--accent-blue); padding-left: 0.75rem; margin-bottom: 0.5rem; }
+        .info-text { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem; }
+        .actions { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; }
+        .primary-button { background-color: var(--accent-purple); color: white; }
+        .primary-button.running { background-color: var(--accent-red); }
+        .secondary-button { background-color: #4b5563; }
+        svg { width: 100%; height: 100%; min-height: 400px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function runApp() {
+            const { useState, useEffect, useRef, useCallback } = React;
+
+            // --- 앱 설정 및 정보 ---
+            const INFO_CONTENT = {
+                bubble: { title: '중력파 정렬 (버블)', concept: '이웃한 두 행성을 비교하여 질량(값)이 잘못되었을 경우 서로의 궤도를 바꿉니다. 이 과정이 반복되며 가장 무거운 행성이 바깥 궤도로 밀려납니다.', bigO: 'O(n²)', features: '구현이 가장 단순하지만, 데이터가 많아질수록 비효율적입니다.' },
+                selection: { title: '항성 형성 (선택)', concept: '성운 전체에서 가장 무거운 행성을 찾아 가장 바깥 궤도에 고정시킵니다. 이 과정을 반복하며 안쪽으로 궤도를 채워나갑니다.', bigO: 'O(n²)', features: '데이터 이동이 적지만, 버블 정렬처럼 비효율적입니다.' },
+                insertion: { title: '궤도 동기화 (삽입)', concept: '하나의 행성을 선택해, 이미 정렬된 안쪽 궤도의 행성들과 비교하며 자신의 올바른 궤도를 찾아 삽입됩니다.', bigO: 'O(n²) / 최선: O(n)', features: '데이터가 거의 정렬된 상태에서 매우 효율적으로 작동합니다.' },
+                merge: { title: '성운 병합 (합병)', concept: '성운을 계속 절반으로 나누어 최소 단위(행성 하나)로 분해한 뒤, 다시 두 성운씩 질량 순서에 맞게 병합하며 전체를 정렬합니다.', bigO: 'O(n log n)', features: '안정적이고 항상 일정한 성능을 보장하는 강력한 정렬 방식입니다.' },
+                quick: { title: '퀘이사 피벗 (퀵)', concept: '성운에서 임의의 기준 행성(피벗)을 선택하고, 그보다 가벼운 행성들은 안쪽, 무거운 행성들은 바깥쪽으로 재배치합니다. 이 과정을 분할된 각 영역에서 반복합니다.', bigO: 'O(n log n) / 최악: O(n²)', features: '평균적으로 매우 빠르지만, 기준 행성 선택에 따라 성능이 크게 달라질 수 있습니다.' }
+            };
+
+            const STATE_COLORS = {
+                comparing: 'var(--accent-red)',
+                swapped: 'var(--accent-yellow)',
+                pivot: 'var(--accent-blue)',
+                sorted: 'var(--accent-green)',
+                default: null
+            };
+
+            // --- 정렬 알고리즘 (생성기 함수) ---
+            function* bubbleSort(originalArr) {
+                let arr = JSON.parse(JSON.stringify(originalArr));
+                for (let i = 0; i < arr.length; i++) {
+                    for (let j = 0; j < arr.length - i - 1; j++) {
+                        arr.forEach(d => { if (d.state !== 'sorted') d.state = 'default'; });
+                        arr[j].state = 'comparing';
+                        arr[j + 1].state = 'comparing';
+                        yield [...arr];
+
+                        if (arr[j].value > arr[j + 1].value) {
+                            [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+                            arr[j].state = 'swapped';
+                            arr[j + 1].state = 'swapped';
+                            yield [...arr];
+                        }
+                    }
+                    arr[arr.length - i - 1].state = 'sorted';
+                    yield [...arr];
+                }
+                arr.forEach(d => d.state = 'sorted');
+                return [...arr];
+            }
+
+            function* selectionSort(originalArr) {
+                let arr = JSON.parse(JSON.stringify(originalArr));
+                for (let i = 0; i < arr.length - 1; i++) {
+                    let min_idx = i;
+                    arr.forEach((d, k) => d.state = k < i ? 'sorted' : 'default');
+                    arr[min_idx].state = 'comparing';
+                    yield [...arr];
+
+                    for (let j = i + 1; j < arr.length; j++) {
+                        arr[j].state = 'comparing';
+                        yield [...arr];
+                        if (arr[j].value < arr[min_idx].value) {
+                            arr[min_idx].state = 'default';
+                            min_idx = j;
+                            arr[min_idx].state = 'comparing';
+                             yield [...arr];
+                        }
+                         arr[j].state = 'default';
+                    }
+
+                    if (min_idx !== i) {
+                        [arr[i], arr[min_idx]] = [arr[min_idx], arr[i]];
+                        arr[i].state = 'swapped';
+                        yield [...arr];
+                    }
+                    arr[i].state = 'sorted';
+                    yield [...arr];
+                }
+                arr[arr.length - 1].state = 'sorted';
+                arr.forEach(d => d.state = 'sorted');
+                return [...arr];
+            }
+
+            function* insertionSort(originalArr) {
+                let arr = JSON.parse(JSON.stringify(originalArr));
+                arr[0].state = 'sorted';
+                yield [...arr];
+                for (let i = 1; i < arr.length; i++) {
+                    let key = arr[i];
+                    let j = i - 1;
+                    arr[i].state = 'comparing';
+                    yield [...arr];
+
+                    while (j >= 0 && arr[j].value > key.value) {
+                        arr[j + 1] = arr[j];
+                        arr[j+1].state = 'swapped';
+                        yield [...arr];
+                        arr[j+1].state = 'sorted';
+                        j = j - 1;
+                    }
+                    arr[j + 1] = key;
+                    arr.forEach((d,k) => {if(k<=i) d.state = 'sorted'});
+                    yield [...arr];
+                }
+                arr.forEach(d => d.state = 'sorted');
+                return [...arr];
+            }
+
+            function* mergeSort(originalArr) {
+                let arr = JSON.parse(JSON.stringify(originalArr));
+                yield* mergeSortRecursive(arr, 0, arr.length - 1);
+                arr.forEach(d => d.state = 'sorted');
+                yield [...arr];
+                return [...arr];
+            }
+
+            function* mergeSortRecursive(arr, l, r) {
+                if (l >= r) {
+                    if(l === r) arr[l].state = 'sorted';
+                    yield [...arr];
+                    return;
+                }
+                const m = Math.floor((l + r) / 2);
+                yield* mergeSortRecursive(arr, l, m);
+                yield* mergeSortRecursive(arr, m + 1, r);
+                yield* merge(arr, l, m, r);
+            }
+
+            function* merge(arr, l, m, r) {
+                let n1 = m - l + 1;
+                let n2 = r - m;
+                let L = arr.slice(l, l + n1);
+                let R = arr.slice(m + 1, m + 1 + n2);
+
+                let i = 0, j = 0, k = l;
+                while (i < n1 && j < n2) {
+                    for(let z=l; z<=r; z++) arr[z].state = 'comparing';
+                    yield [...arr];
+
+                    if (L[i].value <= R[j].value) {
+                        arr[k] = L[i];
+                        i++;
+                    } else {
+                        arr[k] = R[j];
+                        j++;
+                    }
+                    arr[k].state = 'sorted';
+                    k++;
+                }
+                while (i < n1) { arr[k] = L[i]; arr[k].state = 'sorted'; i++; k++; }
+                while (j < n2) { arr[k] = R[j]; arr[k].state = 'sorted'; j++; k++; }
+
+                for(let z=l; z<=r; z++) arr[z].state = 'sorted';
+                yield [...arr];
+            }
+
+            function* quickSort(originalArr) {
+                let arr = JSON.parse(JSON.stringify(originalArr));
+                yield* quickSortRecursive(arr, 0, arr.length - 1);
+                arr.forEach(d => d.state = 'sorted');
+                yield [...arr];
+                return [...arr];
+            }
+            
+            function* quickSortRecursive(arr, low, high) {
+                if (low < high) {
+                    const partitionResult = yield* partition(arr, low, high);
+                    const pi = partitionResult.pivotIndex;
+
+                    arr[pi].state = 'sorted';
+                    yield [...arr];
+
+                    yield* quickSortRecursive(arr, low, pi - 1);
+                    yield* quickSortRecursive(arr, pi + 1, high);
+                } else if (low === high) {
+                    arr[low].state = 'sorted';
+                    yield [...arr];
+                }
+            }
+            
+            function* partition(arr, low, high) {
+                let pivot = arr[high];
+                pivot.state = 'pivot';
+                yield [...arr];
+
+                let i = low - 1;
+                for (let j = low; j < high; j++) {
+                    arr[j].state = 'comparing';
+                    yield [...arr];
+
+                    if (arr[j].value < pivot.value) {
+                        i++;
+                        [arr[i], arr[j]] = [arr[j], arr[i]];
+                        arr[i].state = 'swapped';
+                        yield [...arr];
+                        arr[i].state = 'default';
+                    }
+                     arr[j].state = 'default';
+                }
+                
+                [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+                pivot.state = 'default';
+                return { pivotIndex: i + 1 };
+            }
+
+            const SORT_GENERATORS = { bubble: bubbleSort, selection: selectionSort, insertion: insertionSort, merge: mergeSort, quick: quickSort };
+            
+            // --- React 컴포넌트 ---
+            const Visualization = ({ data, dataSize, speed }) => {
+                const svgRef = useRef();
+                const containerRef = useRef();
+
+                useEffect(() => {
+                    if (!data || data.length === 0 || !containerRef.current) return;
+                    
+                    const containerEl = containerRef.current;
+                    const width = containerEl.clientWidth;
+                    const height = containerEl.clientHeight;
+                    const svg = d3.select(svgRef.current).attr("width", width).attr("height", height);
+
+                    const g = svg.selectAll("g.main-group").data([null]).join("g").attr("class", "main-group").attr("transform", `translate(${width / 2}, ${height / 2})`);
+                    
+                    const defs = svg.selectAll("defs").data([null]).join("defs");
+                    if (defs.select("#star-gradient").empty()) {
+                        const starGradient = defs.append("radialGradient").attr("id", "star-gradient");
+                        starGradient.append("stop").attr("offset", "0%").attr("stop-color", "#fff7b2");
+                        starGradient.append("stop").attr("offset", "100%").attr("stop-color", "#fde047");
+                    }
+                    g.selectAll("circle.star").data([null]).join("circle").attr("class", "star").attr("r", 10).attr("fill", "url(#star-gradient)");
+
+                    const maxOrbitRadius = Math.min(width, height) / 2 - 40;
+                    const radiusScale = d3.scaleSqrt().domain([1, dataSize]).range([4, 12]);
+                    const orbitScale = d3.scalePoint().domain(data.map(d => d.id)).range([40, maxOrbitRadius]).padding(0.5);
+                    const colorScale = d3.scaleSequential(t => d3.interpolateViridis(t * 0.8 + 0.1)).domain([1, dataSize]);
+                    
+                    const sortedIndexMap = new Map(data.map((d, i) => [d.id, i]));
+
+                    const planets = g.selectAll("g.planet").data(data, d => d.id)
+                        .join(
+                            enter => enter.append("g")
+                                .attr("class", "planet")
+                                .attr("transform", d => {
+                                    const index = sortedIndexMap.get(d.id);
+                                    const angle = (360 / dataSize) * index;
+                                    const orbitRadius = orbitScale(d.id);
+                                    return `rotate(${angle}) translate(${orbitRadius}, 0)`;
+                                })
+                                .call(g => g.append("circle")
+                                    .attr("r", d => radiusScale(d.value))
+                                    .attr("fill", d => STATE_COLORS[d.state] || colorScale(d.value))
+                                ),
+                            update => update,
+                            exit => exit.remove()
+                        );
+                    
+                    planets.select("circle")
+                        .transition().duration(100)
+                        .attr("r", d => radiusScale(d.value))
+                        .attr("fill", d => STATE_COLORS[d.state] || colorScale(d.value));
+
+                    planets.transition()
+                        .duration(150 - speed < 0 ? 0 : 150 - speed)
+                        .attr("transform", d => {
+                             const index = sortedIndexMap.get(d.id);
+                             const angle = (360 / dataSize) * index;
+                             const orbitRadius = orbitScale(d.id);
+                             return `rotate(${angle}) translate(${orbitRadius}, 0)`;
+                        });
+
+                }, [data, dataSize, speed]);
+
+                return <div className="vis-container" ref={containerRef}><svg ref={svgRef}></svg></div>;
+            };
+
+            const InfoCard = ({ algo, time }) => {
+                const content = INFO_CONTENT[algo];
+                return (
+                    <div className="info-card-wrapper">
+                        <h2 className="info-title">{content.title}</h2>
+                        <div className="info-timer">
+                            <span>소요 시간: </span>
+                            <span className="timer-value">{(time / 1000).toFixed(3)} 초</span>
+                        </div>
+                        <h3 className="info-heading">핵심 원리</h3>
+                        <p className="info-text">{content.concept}</p>
+                        <h3 className="info-heading">시간 복잡도</h3>
+                        <p className="info-text" style={{fontFamily: 'monospace'}}>{content.bigO}</p>
+                        <h3 className="info-heading">특징</h3>
+                        <p className="info-text">{content.features}</p>
+                    </div>
+                );
+            };
+
+            function App() {
+                const [dataSize, setDataSize] = useState(30);
+                const [speed, setSpeed] = useState(50);
+                const [data, setData] = useState([]);
+                const [algorithm, setAlgorithm] = useState('bubble');
+                const [isSorting, setIsSorting] = useState(false);
+                const [elapsedTime, setElapsedTime] = useState(0);
+                
+                const animationRef = useRef(null);
+                const generatorRef = useRef(null);
+                const timerRef = useRef(null);
+                const startTimeRef = useRef(null);
+
+                const generateNewData = useCallback(() => {
+                    const initialData = Array.from({ length: dataSize }, (_, i) => ({
+                        value: i + 1, id: i, state: 'default'
+                    }));
+                    return d3.shuffle(initialData.slice());
+                }, [dataSize]);
+
+                const stopSorting = useCallback(() => {
+                    if (animationRef.current) clearTimeout(animationRef.current);
+                    if (timerRef.current) clearInterval(timerRef.current);
+                    setIsSorting(false);
+                    generatorRef.current = null;
+                }, []);
+
+                useEffect(() => { setData(generateNewData()); stopSorting(); setElapsedTime(0);}, [dataSize, generateNewData]);
+                
+                useEffect(() => { return () => stopSorting(); }, [stopSorting]);
+
+                const handleReset = () => {
+                    stopSorting();
+                    setElapsedTime(0);
+                    setData(generateNewData());
+                };
+
+                const handleStartStop = () => {
+                    if (isSorting) {
+                        stopSorting();
+                    } else {
+                        setIsSorting(true);
+                        setElapsedTime(0);
+                        startTimeRef.current = performance.now();
+                        timerRef.current = setInterval(() => {
+                            setElapsedTime(performance.now() - startTimeRef.current);
+                        }, 10);
+                        
+                        generatorRef.current = SORT_GENERATORS[algorithm]([...data]);
+                        
+                        const animate = () => {
+                            if (!generatorRef.current) return;
+                            const result = generatorRef.current.next();
+                            if (!result.done) {
+                                setData(result.value);
+                                animationRef.current = setTimeout(animate, 150 - speed);
+                            } else {
+                                if (result.value) {
+                                    setData(result.value.map(d => ({...d, state: 'sorted'})));
+                                }
+                                stopSorting();
+                            }
+                        };
+                        animate();
+                    }
+                };
+                
+                const handleAlgorithmChange = (algo) => {
+                    if (isSorting) stopSorting();
+                    setAlgorithm(algo);
+                    setElapsedTime(0);
+                    setData(generateNewData());
+                };
+
+                return (
+                    <div className="app-wrapper">
+                        <header className="header">
+                            <h1 className="title">알고리즘 성운</h1>
+                            <p className="subtitle">D3.js와 React로 구현한 정렬 알고리즘 시각화</p>
+                        </header>
+                        
+                        <div className="controls-group">
+                             <div className="control-section">
+                                {Object.keys(INFO_CONTENT).map(key => (
+                                    <button key={key}
+                                        className={`algo-button ${algorithm === key ? 'active' : ''}`}
+                                        onClick={() => handleAlgorithmChange(key)}
+                                        disabled={isSorting}>
+                                        {INFO_CONTENT[key].title}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="control-section">
+                                <div className="slider-container">
+                                    <span>행성 수:</span> 
+                                    <input type="range" min="10" max="40" value={dataSize} onChange={e => setDataSize(+e.target.value)} disabled={isSorting} className="slider" /> 
+                                    <span className="slider-value">{dataSize}</span>
+                                </div>
+                                <div className="slider-container">
+                                    <span>속도:</span> 
+                                    <input type="range" min="10" max="140" value={speed} onChange={e => setSpeed(+e.target.value)} className="slider" />
+                                     <span className="slider-value">{speed}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <main className="main-layout">
+                            <Visualization data={data} dataSize={dataSize} speed={speed} />
+                            <InfoCard algo={algorithm} time={elapsedTime} />
+                        </main>
+                        <div className="actions">
+                            <button className={`button primary-button ${isSorting ? 'running' : ''}`} onClick={handleStartStop}>
+                                {isSorting ? '중지' : '시작'}
+                            </button>
+                            <button className="button secondary-button" onClick={handleReset} disabled={isSorting}>초기화</button>
+                        </div>
+                    </div>
+                );
+            }
+
+            // React 앱 렌더링
+            const container = document.getElementById('root');
+            const root = ReactDOM.createRoot(container);
+            root.render(<App />);
+        }
+
+        // 라이브러리가 모두 로드되었는지 확인 후 앱 실행
+        let readyCheck = setInterval(() => {
+            if (window.React && window.ReactDOM && window.d3) {
+                clearInterval(readyCheck);
+                runApp();
+            }
+        }, 100);
+    </script>
+</body>
+</html>

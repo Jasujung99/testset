@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>알고리즘 성운 (Algorithm Nebula)</title>
+    <!-- React, Babel, Vega 라이브러리 로드 -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Vega 및 Vega-Embed 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/vega@5.22.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.6.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.21.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">    <style>
+        :root {
+            --bg-deep-space: #0c0a1a;
+            --bg-space: #111827;
+            --bg-nebula: #1f2937;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --accent-purple: #818cf8;
+            --accent-blue: #60a5fa;
+            --accent-yellow: #facc15;
+            --accent-red: #f87171;
+            --accent-green: #4ade80;
+        }
+        body { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            background-color: var(--bg-deep-space);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+            margin: 0;
+        }
+        .app-wrapper {
+            width: 100%;
+            max-width: 1400px;
+            background-color: var(--bg-space);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid #374151;
+            box-shadow: 0 0 50px -10px rgba(129, 140, 248, 0.2);
+        }
+        .header { text-align: center; margin-bottom: 1.5rem; }
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            margin-bottom: 2rem;
+        }        
+        .vis-container {
+            position: relative;
+            background: radial-gradient(circle, #2d3748 0%, var(--bg-deep-space) 70%);
+            min-height: 60vh;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .controls-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background-color: var(--bg-deep-space);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .control-section { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }        .button, .algo-button {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: #374151;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        .button:hover, .algo-button:hover {
+            background-color: #4b5563;
+            transform: translateY(-1px);
+        }
+        .algo-button.active {
+            background-color: var(--accent-purple);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px -5px rgba(129, 140, 248, 0.4);
+        }
+        .slider-container { display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); font-size: 0.9rem; }
+        .slider { accent-color: var(--accent-purple); }
+        .slider-value { color: var(--text-primary); font-weight: 700; min-width: 25px; }        .primary-button { background-color: var(--accent-purple); color: white; }
+        .primary-button.running { background-color: var(--accent-red); }
+        .secondary-button { background-color: #4b5563; }
+          .actions { 
+            display: flex; 
+            justify-content: center; 
+            gap: 1rem; 
+            margin-top: 1.5rem; 
+        }
+        
+        .main-layout { 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 1.5rem; 
+            margin-bottom: 1.5rem; 
+        }
+        @media (min-width: 768px) {
+            .main-layout { 
+                grid-template-columns: 3fr 1fr; 
+            }
+        }
+        .info-card-wrapper { 
+            background-color: var(--bg-nebula); 
+            padding: 1.5rem; 
+            border-radius: 8px; 
+        }
+        .info-title { 
+            font-size: 1.5rem; 
+            font-weight: 700; 
+            color: var(--accent-blue); 
+            margin-bottom: 1rem; 
+        }
+        .info-timer { 
+            margin-bottom: 1rem; 
+            font-size: 1.1rem; 
+            color: var(--text-secondary); 
+        }
+        .timer-value { 
+            font-weight: 700; 
+            color: var(--accent-yellow); 
+            font-family: monospace; 
+        }
+        .info-heading { 
+            font-weight: 700; 
+            color: var(--text-primary); 
+            border-left: 3px solid var(--accent-blue); 
+            padding-left: 0.75rem; 
+            margin-bottom: 0.5rem; 
+        }
+        .info-text { 
+            color: var(--text-secondary); 
+            font-size: 0.9rem; 
+            margin-bottom: 1rem; 
+        }
+        
+        /* 기존 개별 스타일 */
+        
+        /* 알고리즘 버튼 스타일 */
+        .algo-btn {
+            position: relative;
+            overflow: visible;
+        }
+        
+        .complexity-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 0.7rem;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .algo-btn:hover .complexity-badge,
+        .algo-btn.active .complexity-badge {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        /* 배열 시각화 */
+        .array-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 2px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            max-width: 90%;
+            overflow-x: auto;
+        }
+        
+        .array-item {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            font-family: monospace;
+            transition: all 0.3s ease;
+        }
+        
+        .array-item.default { background-color: rgba(96, 165, 250, 0.7); box-shadow: 0 2px 4px rgba(96, 165, 250, 0.3); }        .array-item.comparing { 
+            background-color: rgba(248, 113, 113, 0.9);
+            transform: translateY(-4px);
+            box-shadow: 0 4px 8px rgba(248, 113, 113, 0.4);
+        }        .array-item.swapped { 
+            background-color: rgba(250, 204, 21, 0.9);
+            transform: translateY(-2px) scale(1.1);
+            box-shadow: 0 4px 8px rgba(250, 204, 21, 0.4);
+        }        .array-item.pivot { 
+            background-color: rgba(129, 140, 248, 0.9);
+            box-shadow: 0 4px 8px rgba(129, 140, 248, 0.4);
+        }.array-item.sorted { 
+            background-color: rgba(74, 222, 128, 0.9);
+            box-shadow: 0 4px 8px rgba(74, 222, 128, 0.4);
+        }        .array-item.min { 
+            background-color: rgba(167, 139, 250, 0.9);
+            box-shadow: 0 4px 8px rgba(167, 139, 250, 0.4);
+        }        .array-item.key { 
+            background-color: rgba(251, 146, 60, 0.9);
+            box-shadow: 0 4px 8px rgba(251, 146, 60, 0.4);
+        }        .array-item.merged { 
+            background-color: rgba(52, 211, 153, 0.9);
+            animation: fadeIn 0.5s;
+            box-shadow: 0 4px 8px rgba(52, 211, 153, 0.4);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+          #vega-vis {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 반응형 스타일 */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2rem;
+            }
+            .subtitle {
+                font-size: 1rem;
+            }
+            .algo-button {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+            .controls-group {
+                gap: 0.5rem;
+            }
+            .control-section {
+                gap: 0.3rem;
+            }
+            .array-item {
+                width: 24px;
+                height: 24px;
+                font-size: 11px;
+            }
+            .info-title {
+                font-size: 1.2rem;
+            }
+            .app-wrapper {
+                padding: 1rem;
+            }
+        }
+        
+        /* 애니메이션 개선 */
+        .app-wrapper {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .vis-container {
+            transition: all 0.3s ease;
+        }
+        
+        /* 호버 효과 개선 */
+        .button:hover, .algo-button:hover {
+            box-shadow: 0 2px 8px rgba(129, 140, 248, 0.3);
+        }
+        
+        .info-card-wrapper {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(129, 140, 248, 0.1);
+        }
+        
+        .info-card-wrapper:hover {
+            border-color: rgba(129, 140, 248, 0.3);
+            box-shadow: 0 4px 20px rgba(129, 140, 248, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function runApp() {
+            const { useState, useEffect, useRef, useCallback } = React;
+            const N = 25; // 데이터 포인트 수
+              // 알고리즘 정보 - 우주 테마
+            const algoInfo = {
+                bubble: { 
+                    title: '중력파 정렬 (Gravitational Wave Sort)', 
+                    concept: '이웃한 두 행성을 비교하여 질량(값)이 잘못되었을 경우 서로의 궤도를 바꿉니다. 이 과정이 반복되며 가장 무거운 행성이 바깥 궤도로 밀려납니다.',
+                    color: '#3C6CDF',
+                    complexity: 'O(n²)',
+                    bgClass: 'primary'
+                },
+                selection: { 
+                    title: '항성 형성 (Stellar Formation Sort)', 
+                    concept: '성운 전체에서 가장 무거운 행성을 찾아 가장 바깥 궤도에 고정시킵니다. 이 과정을 반복하며 안쪽으로 궤도를 채워나갑니다.',
+                    color: '#8A4FFF',
+                    complexity: 'O(n²)',
+                    bgClass: 'secondary'
+                },
+                insertion: { 
+                    title: '궤도 동기화 (Orbital Synchronization Sort)', 
+                    concept: '하나의 행성을 선택해, 이미 정렬된 안쪽 궤도의 행성들과 비교하며 자신의 올바른 궤도를 찾아 삽입됩니다.',
+                    color: '#F5597F',
+                    complexity: 'O(n²)',
+                    bgClass: 'danger'
+                },
+                merge: { 
+                    title: '성운 병합 (Nebula Merge Sort)', 
+                    concept: '성운을 계속 절반으로 나누어 최소 단위(행성 하나)로 분해한 뒤, 다시 두 성운씩 질량 순서에 맞게 병합하며 전체를 정렬합니다.',
+                    color: '#57CBFF',
+                    complexity: 'O(n log n)',
+                    bgClass: 'info'
+                },
+                quick: { 
+                    title: '퀘이사 피벗 (Quasar Pivot Sort)', 
+                    concept: '성운에서 임의의 기준 행성(피벗)을 선택하고, 그보다 가벼운 행성들은 안쪽, 무거운 행성들은 바깥쪽으로 재배치합니다. 이 과정을 분할된 각 영역에서 반복합니다.',
+                    color: '#FCBB4A',
+                    complexity: 'O(n log n)',
+                    bgClass: 'warning'
+                }
+            };
+
+            // 버블 정렬
+            function* bubbleSort(arr) { 
+                let a = JSON.parse(JSON.stringify(arr)); 
+                for(let i = 0; i < a.length; i++) { 
+                    for (let j = 0; j < a.length - i - 1; j++) { 
+                        a.forEach(d => { if(d.state !== 'sorted') d.state = 'default'; });
+                        a[j].state = 'comparing'; 
+                        a[j+1].state = 'comparing';
+                        yield [...a];
+                        
+                        if (a[j].value > a[j+1].value) {
+                            const temp = {...a[j]};
+                            a[j] = {...a[j+1]};
+                            a[j+1] = temp;
+                            a[j].state = 'swapped';
+                            a[j+1].state = 'swapped';
+                            yield [...a];
+                        }
+                    }
+                    a[a.length - i - 1].state = 'sorted';
+                }
+                a.forEach(d => d.state = 'sorted');
+                return [...a];
+            }
+            
+            // 선택 정렬
+            function* selectionSort(arr) { 
+                let a = JSON.parse(JSON.stringify(arr)); 
+                for(let i = 0; i < a.length - 1; i++) { 
+                    let min_idx = i; 
+                    a.forEach((d, k) => d.state = k < i ? 'sorted' : 'default');
+                    a[min_idx].state = 'min';
+                    yield [...a];
+                    
+                    for(let j = i + 1; j < a.length; j++) {
+                        a[j].state = 'comparing';
+                        yield [...a];
+                        
+                        if (a[j].value < a[min_idx].value) {
+                            a[min_idx].state = 'default';
+                            min_idx = j;
+                            a[min_idx].state = 'min';
+                            yield [...a];
+                        } else {
+                            a[j].state = 'default';
+                        }
+                    }
+                    
+                    if (min_idx !== i) {
+                        const temp = {...a[i]};
+                        a[i] = {...a[min_idx]};
+                        a[min_idx] = temp;
+                        a[i].state = 'sorted';
+                        yield [...a];
+                    }
+                    a[i].state = 'sorted';
+                }
+                a[a.length - 1].state = 'sorted';
+                return [...a];
+            }
+            
+            // 삽입 정렬
+            function* insertionSort(arr) {
+                let a = JSON.parse(JSON.stringify(arr));
+                for (let i = 1; i < a.length; i++) {
+                    a.forEach((d, k) => d.state = k < i ? 'sorted' : 'default');
+                    a[i].state = 'key';
+                    yield [...a];
+                    
+                    let key = {...a[i]};
+                    let j = i - 1;
+                    
+                    while (j >= 0 && a[j].value > key.value) {
+                        a[j].state = 'comparing';
+                        a[j + 1].state = 'comparing';
+                        yield [...a];
+                        
+                        a[j + 1] = {...a[j]};
+                        a[j + 1].state = 'swapped';
+                        yield [...a];
+                        j--;
+                    }
+                    a[j + 1] = key;
+                    a[j + 1].state = 'sorted';
+                    yield [...a];
+                }
+                a.forEach(d => d.state = 'sorted');
+                return [...a];
+            }
+            
+            // 병합 정렬
+            function* mergeSort(arr) {
+                let a = JSON.parse(JSON.stringify(arr));
+                yield* mergeSortHelper(a, 0, a.length - 1);
+                a.forEach(d => d.state = 'sorted');
+                return [...a];
+            }
+            
+            function* mergeSortHelper(arr, left, right) {
+                if (left >= right) return;
+                
+                const mid = Math.floor((left + right) / 2);
+                yield* mergeSortHelper(arr, left, mid);
+                yield* mergeSortHelper(arr, mid + 1, right);
+                yield* merge(arr, left, mid, right);
+            }
+            
+            function* merge(arr, left, mid, right) {
+                const leftArr = arr.slice(left, mid + 1);
+                const rightArr = arr.slice(mid + 1, right + 1);
+                
+                let i = 0, j = 0, k = left;
+                
+                while (i < leftArr.length && j < rightArr.length) {
+                    arr.forEach(d => d.state = 'default');
+                    arr[k].state = 'comparing';
+                    yield [...arr];
+                    
+                    if (leftArr[i].value <= rightArr[j].value) {
+                        arr[k] = {...leftArr[i]};
+                        i++;
+                    } else {
+                        arr[k] = {...rightArr[j]};
+                        j++;
+                    }
+                    arr[k].state = 'merged';
+                    k++;
+                    yield [...arr];
+                }
+                
+                while (i < leftArr.length) {
+                    arr[k] = {...leftArr[i]};
+                    arr[k].state = 'merged';
+                    i++;
+                    k++;
+                    yield [...arr];
+                }
+                
+                while (j < rightArr.length) {
+                    arr[k] = {...rightArr[j]};
+                    arr[k].state = 'merged';
+                    j++;
+                    k++;
+                    yield [...arr];
+                }
+            }
+            
+            // 퀵 정렬
+            function* quickSort(arr) {
+                let a = JSON.parse(JSON.stringify(arr));
+                yield* quickSortHelper(a, 0, a.length - 1);
+                a.forEach(d => d.state = 'sorted');
+                return [...a];
+            }
+            
+            function* quickSortHelper(arr, low, high) {
+                if (low < high) {
+                    const pivotIndex = yield* partition(arr, low, high);
+                    yield* quickSortHelper(arr, low, pivotIndex - 1);
+                    yield* quickSortHelper(arr, pivotIndex + 1, high);
+                }
+            }
+            
+            function* partition(arr, low, high) {
+                arr.forEach(d => d.state = 'default');
+                const pivot = arr[high];
+                pivot.state = 'pivot';
+                yield [...arr];
+                
+                let i = low - 1;
+                
+                for (let j = low; j < high; j++) {
+                    arr[j].state = 'comparing';
+                    yield [...arr];
+                    
+                    if (arr[j].value < pivot.value) {
+                        i++;
+                        if (i !== j) {
+                            [arr[i], arr[j]] = [arr[j], arr[i]];
+                            arr[i].state = 'swapped';
+                            arr[j].state = 'swapped';
+                            yield [...arr];
+                        }
+                    }
+                    arr[j].state = 'default';
+                }
+                
+                [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+                arr[i + 1].state = 'pivot';
+                yield [...arr];
+                
+                return i + 1;
+            }
+            
+            const sortGenerators = { 
+                bubble: bubbleSort, 
+                selection: selectionSort,
+                insertion: insertionSort,
+                merge: mergeSort,
+                quick: quickSort
+            };
+
+            // Vega 시각화 컴포넌트
+            const VegaVisualization = ({ data, algorithm }) => {
+                const containerRef = useRef();
+                const vegaRef = useRef(null);
+                
+                // Vega 스펙 생성 함수
+                const createVegaSpec = useCallback((dataset) => {
+                    // 중심점 좌표
+                    const center = 200;                    // 상태에 따른 색상 매핑 - 우주 테마 색상
+                    const colorMap = {
+                        'default': '#60a5fa',      // 블루 (기본 행성)
+                        'comparing': '#f87171',    // 레드 (비교 중)
+                        'swapped': '#facc15',      // 옐로우 (교환됨)
+                        'sorted': '#4ade80',       // 그린 (정렬됨)
+                        'min': '#a78bfa',          // 퍼플 (최솟값)
+                        'key': '#fb923c',          // 오렌지 (키 값)
+                        'pivot': '#818cf8',        // 인디고 (피벗)
+                        'merged': '#34d399'        // 에메랄드 (병합됨)
+                    };
+                    
+                    // 데이터 확장: 극좌표 계산 (황금각으로 균등 분포)
+                    const polarData = dataset.map((d, i) => {
+                        // 황금각(Golden Angle) 사용으로 균등 분포 구현
+                        const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // 약 137.5도
+                        const angle = i * goldenAngle;
+                        
+                        // 아르키메데스 나선 공식 개선
+                        const spiralTightness = 8; // 나선의 간격
+                        const radius = Math.min(150, spiralTightness * Math.sqrt(i + 1));
+                        
+                        // 극좌표 -> 데카르트 좌표 변환
+                        const x = center + radius * Math.cos(angle);
+                        const y = center + radius * Math.sin(angle);
+                        
+                        // 크기 계산 (더 큰 노드)
+                        const baseSize = 20; // 기본 크기 증가
+                        const variableSize = (d.value / dataset.length) * 25; // 가변 크기 증가
+                        const size = baseSize + variableSize;
+                        
+                        return {
+                            ...d,
+                            x,
+                            y,
+                            size,
+                            angle,
+                            radius,
+                            color: colorMap[d.state] || colorMap.default
+                        };
+                    });
+                      // 중앙 "태양" 데이터 (크기 확대)
+                    const sunData = [{
+                        x: center,
+                        y: center,
+                        size: 60, // 중앙 태양 크기 증가
+                        color: algoInfo[algorithm].color,
+                        isSun: true
+                    }];
+                    
+                    // 궤도선 데이터 생성
+                    const orbitData = [];
+                    for (let r = 40; r <= 150; r += 30) {
+                        for (let angle = 0; angle < 360; angle += 5) {
+                            const radian = (angle * Math.PI) / 180;
+                            orbitData.push({
+                                x: center + r * Math.cos(radian),
+                                y: center + r * Math.sin(radian),
+                                radius: r
+                            });
+                        }
+                    }
+                    
+                    // Vega 스펙 정의
+                    return {
+                        "$schema": "https://vega.github.io/schema/vega/v5.json",
+                        "width": 400,
+                        "height": 400,
+                        "padding": 20,
+                        "autosize": "none",
+                        "background": null,
+                          "data": [
+                            {
+                                "name": "orbits",
+                                "values": orbitData
+                            },
+                            {
+                                "name": "planets",
+                                "values": polarData
+                            },
+                            {
+                                "name": "sun",
+                                "values": sunData
+                            }
+                        ],
+                        
+                        "marks": [
+                            {
+                                "type": "symbol",
+                                "from": {"data": "orbits"},
+                                "encode": {
+                                    "enter": {
+                                        "x": {"field": "x"},
+                                        "y": {"field": "y"},
+                                        "size": {"value": 1},
+                                        "fill": {"value": "rgba(255,255,255,0.1)"},
+                                        "stroke": {"value": "none"}
+                                    }
+                                }
+                            },                            {
+                                "type": "symbol",
+                                "from": {"data": "sun"},
+                                "encode": {
+                                    "enter": {
+                                        "x": {"field": "x"},
+                                        "y": {"field": "y"},
+                                        "size": {"field": "size", "mult": 15},
+                                        "fill": {"field": "color"},
+                                        "fillOpacity": {"value": 0.8}
+                                    },
+                                    "update": {
+                                        "stroke": {"value": "white"},
+                                        "strokeOpacity": {"value": 0.5},
+                                        "strokeWidth": {"value": 3}
+                                    }
+                                }
+                            },                            {
+                                "type": "symbol",
+                                "from": {"data": "planets"},
+                                "encode": {
+                                    "enter": {
+                                        "x": {"field": "x"},
+                                        "y": {"field": "y"},
+                                        "size": {"field": "size", "mult": 15}
+                                    },
+                                    "update": {
+                                        "fill": {"field": "color"},
+                                        "fillOpacity": {"value": 0.85},
+                                        "stroke": {"value": "rgba(255,255,255,0.6)"},
+                                        "strokeOpacity": {"value": 0.6},
+                                        "strokeWidth": {"value": 2}
+                                    }
+                                }
+                            },
+                            {
+                                "type": "text",
+                                "from": {"data": "planets"},
+                                "encode": {
+                                    "enter": {
+                                        "x": {"field": "x"},
+                                        "y": {"field": "y"},
+                                        "text": {"field": "value"},
+                                        "align": {"value": "center"},
+                                        "baseline": {"value": "middle"},
+                                        "fill": {"value": "white"},
+                                        "fontSize": {"value": 14}, // 텍스트 크기 증가
+                                        "fontWeight": {"value": "bold"},
+                                        "font": {"value": "monospace"}
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                }, [algorithm]);
+                
+                // Vega 시각화 렌더링
+                useEffect(() => {
+                    if (!data || data.length === 0 || !containerRef.current) return;
+                    
+                    const vegaSpec = createVegaSpec(data);
+                    
+                    // 기존 배열 컨테이너 제거
+                    const existingArray = containerRef.current.querySelector('.array-container');
+                    if (existingArray) {
+                        existingArray.remove();
+                    }
+                    
+                    // Vega 시각화 렌더링
+                    vegaEmbed('#vega-vis', vegaSpec, {
+                        actions: false,
+                        renderer: 'canvas'
+                    }).then(result => {
+                        vegaRef.current = result;
+                    }).catch(console.error);
+                    
+                    // 배열 시각화
+                    const containerEl = containerRef.current;
+                    const arrayContainer = document.createElement("div");
+                    arrayContainer.className = "array-container";
+                    
+                    arrayContainer.innerHTML = '';
+                    data.forEach(item => {
+                        const arrayItem = document.createElement("div");
+                        arrayItem.className = `array-item ${item.state || 'default'}`;
+                        arrayItem.textContent = item.value;
+                        arrayContainer.appendChild(arrayItem);
+                    });
+                    
+                    containerEl.appendChild(arrayContainer);
+                }, [data, createVegaSpec]);                return (
+                    <div ref={containerRef} className="vis-container">
+                        <div id="vega-vis"></div>
+                    </div>
+                );
+            };
+            
+            // 정보 카드 컴포넌트
+            const InfoCard = ({ algo, time, isSorting }) => {
+                const INFO_CONTENT = {
+                    bubble: { 
+                        title: '중력파 정렬 (버블)', 
+                        concept: '이웃한 두 행성을 비교하여 질량(값)이 잘못되었을 경우 서로의 궤도를 바꿉니다. 이 과정이 반복되며 가장 무거운 행성이 바깥 궤도로 밀려납니다.', 
+                        bigO: 'O(n²)', 
+                        features: '구현이 가장 단순하지만, 데이터가 많아질수록 비효율적입니다.' 
+                    },
+                    selection: { 
+                        title: '항성 형성 (선택)', 
+                        concept: '성운 전체에서 가장 무거운 행성을 찾아 가장 바깥 궤도에 고정시킵니다. 이 과정을 반복하며 안쪽으로 궤도를 채워나갑니다.', 
+                        bigO: 'O(n²)', 
+                        features: '데이터 이동이 적지만, 버블 정렬처럼 비효율적입니다.' 
+                    },
+                    insertion: { 
+                        title: '궤도 동기화 (삽입)', 
+                        concept: '하나의 행성을 선택해, 이미 정렬된 안쪽 궤도의 행성들과 비교하며 자신의 올바른 궤도를 찾아 삽입됩니다.', 
+                        bigO: 'O(n²) / 최선: O(n)', 
+                        features: '데이터가 거의 정렬된 상태에서 매우 효율적으로 작동합니다.' 
+                    },
+                    merge: { 
+                        title: '성운 병합 (합병)', 
+                        concept: '성운을 계속 절반으로 나누어 최소 단위(행성 하나)로 분해한 뒤, 다시 두 성운씩 질량 순서에 맞게 병합하며 전체를 정렬합니다.', 
+                        bigO: 'O(n log n)', 
+                        features: '안정적이고 항상 일정한 성능을 보장하는 강력한 정렬 방식입니다.' 
+                    },
+                    quick: { 
+                        title: '퀘이사 피벗 (퀵)', 
+                        concept: '성운에서 임의의 기준 행성(피벗)을 선택하고, 그보다 가벼운 행성들은 안쪽, 무거운 행성들은 바깥쪽으로 재배치합니다. 이 과정을 분할된 각 영역에서 반복합니다.', 
+                        bigO: 'O(n log n) / 최악: O(n²)', 
+                        features: '평균적으로 매우 빠르지만, 기준 행성 선택에 따라 성능이 크게 달라질 수 있습니다.' 
+                    }
+                };
+                
+                const content = INFO_CONTENT[algo];
+                return (
+                    <div className="info-card-wrapper">
+                        <h2 className="info-title">
+                            {content.title}
+                            {isSorting && (
+                                <span style={{fontSize: '0.8rem', color: 'var(--accent-yellow)'}}>
+                                    조율 중
+                                </span>
+                            )}
+                        </h2>
+                        <div className="info-timer">
+                            <span>⏱️ </span>
+                            <span className="timer-value">{time.toFixed(2)} 초</span>
+                        </div>
+                        <div>
+                            <h3 className="info-heading">핵심 원리</h3>
+                            <p className="info-text">{content.concept}</p>
+                            <h3 className="info-heading">시간 복잡도</h3>
+                            <p className="info-text" style={{fontFamily: 'monospace'}}>{content.bigO}</p>
+                            <h3 className="info-heading">특징</h3>
+                            <p className="info-text">{content.features}</p>
+                        </div>
+                    </div>
+                );
+            };
+            
+            // 메인 앱 컴포넌트
+            function App() {
+                const [data, setData] = useState([]);
+                const [algorithm, setAlgorithm] = useState('bubble');
+                const [isSorting, setIsSorting] = useState(false);
+                const [time, setTime] = useState(0);
+                const [speed, setSpeed] = useState(75);
+                
+                const animationRef = useRef(null);
+                const timerRef = useRef(null);
+                const generatorRef = useRef(null);
+                const startTimeRef = useRef(null);
+
+                // 초기 데이터 생성
+                const generateNewData = useCallback(() => {
+                    const newData = Array.from({ length: N }, (_, i) => ({
+                        value: i + 1,
+                        id: i,
+                        state: 'default'
+                    }));
+                    for (let i = newData.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [newData[i], newData[j]] = [newData[j], newData[i]];
+                    }
+                    return newData;
+                }, []);
+
+                useEffect(() => {
+                    setData(generateNewData());
+                    return () => {
+                        if (animationRef.current) clearTimeout(animationRef.current);
+                        if (timerRef.current) clearInterval(timerRef.current);
+                    };
+                }, [generateNewData]);
+
+                const clearAnimationFrame = () => {
+                    if (animationRef.current) {
+                        clearTimeout(animationRef.current);
+                        animationRef.current = null;
+                    }
+                    if (timerRef.current) {
+                        clearInterval(timerRef.current);
+                        timerRef.current = null;
+                    }
+                };
+                
+                const stopSorting = () => {
+                    clearAnimationFrame();
+                    setIsSorting(false);
+                    generatorRef.current = null;
+                };
+                
+                const handleReset = () => {
+                    if (isSorting) stopSorting();
+                    setTime(0);
+                    setData(generateNewData());
+                };
+                
+                const handleStartStop = () => {
+                    if (isSorting) {
+                        stopSorting();
+                    } else {
+                        startSorting();
+                    }
+                };
+                
+                const startSorting = () => {
+                    clearAnimationFrame();
+                    setIsSorting(true);
+                    
+                    try {
+                        generatorRef.current = sortGenerators[algorithm]([...data]);
+                        startTimeRef.current = performance.now();
+                        
+                        timerRef.current = setInterval(() => {
+                            setTime((performance.now() - startTimeRef.current) / 1000);
+                        }, 10);
+                        
+                        const animate = () => {
+                            try {
+                                const result = generatorRef.current.next();
+                                
+                                if (!result.done) {
+                                    setData(result.value);
+                                    animationRef.current = setTimeout(animate, speed);
+                                } else {
+                                    setData(result.value);
+                                    clearAnimationFrame();
+                                    setIsSorting(false);
+                                }
+                            } catch (error) {
+                                console.error('애니메이션 오류:', error);
+                                clearAnimationFrame();
+                                setIsSorting(false);
+                            }
+                        };
+                        
+                        animate();
+                    } catch (error) {
+                        console.error('정렬 시작 오류:', error);
+                        clearAnimationFrame();
+                        setIsSorting(false);
+                    }
+                };
+                
+                const handleAlgorithmChange = (algo) => {
+                    if (algo === algorithm) return;
+                    if (isSorting) stopSorting();
+                    setAlgorithm(algo);
+                    setTime(0);
+                    setData(generateNewData());
+                };
+                
+                const formatSpeed = (speedValue) => {
+                    if (speedValue >= 100) return "느림";
+                    if (speedValue >= 50) return "보통";
+                    return "빠름";
+                };                return (
+                    <div className="app-wrapper">
+                        <div className="header">
+                            <h1 className="title">알고리즘 성운 (Algorithm Nebula)</h1>
+                            <p className="subtitle">Vega로 구현한 우주 정렬 알고리즘 시각화</p>
+                        </div>
+                        
+                        <div className="controls-group">
+                            <div className="control-section">
+                                {Object.keys(algoInfo).map(key => (
+                                    <button 
+                                        key={key}
+                                        className={`algo-button ${algorithm === key ? 'active' : ''}`}
+                                        onClick={() => handleAlgorithmChange(key)}
+                                    >
+                                        {key === 'bubble' ? '중력파 정렬' : 
+                                         key === 'selection' ? '항성 형성' :
+                                         key === 'insertion' ? '궤도 동기화' :
+                                         key === 'merge' ? '성운 병합' : '퀘이사 피벗'}
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            <div className="control-section">
+                                <div className="slider-container">
+                                    <span>속도:</span>
+                                    <input 
+                                        type="range"
+                                        min="1"
+                                        max="100" 
+                                        value={speed}
+                                        className="slider"
+                                        onChange={e => setSpeed(parseInt(e.target.value))}
+                                        disabled={isSorting}
+                                    />
+                                    <span className="slider-value">{formatSpeed(speed)}</span>
+                                </div>
+                            </div>
+                        </div>                        <div className="main-layout">
+                            <VegaVisualization data={data} algorithm={algorithm} />
+                            <InfoCard algo={algorithm} time={time} isSorting={isSorting} />
+                        </div>
+
+                        <div className="actions">
+                            <button 
+                                className={`button ${isSorting ? 'primary-button running' : 'primary-button'}`}
+                                onClick={handleStartStop}
+                            >
+                                {isSorting ? '중지' : '시작'}
+                            </button>
+                            <button 
+                                className="button secondary-button" 
+                                onClick={handleReset}
+                                disabled={isSorting}
+                            >
+                                초기화
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            const container = document.getElementById('root');
+            const root = ReactDOM.createRoot(container);
+            root.render(<App />);
+        }
+        
+        // 라이브러리 로드 확인
+        let attempts = 0;
+        const maxAttempts = 50;
+        
+        const readyCheck = setInterval(() => {
+            attempts++;
+            if (window.React && window.ReactDOM && window.ReactDOM.createRoot && window.vega) {
+                clearInterval(readyCheck);
+                runApp();
+            } else if (attempts >= maxAttempts) {
+                clearInterval(readyCheck);
+                document.getElementById('root').innerHTML = `
+                    <div class="alert alert-danger">
+                        <h2>라이브러리 로드 중 오류가 발생했습니다</h2>
+                        <p>페이지를 새로고침하거나 다른 브라우저에서 시도해 주세요.</p>
+                    </div>
+                `;
+            }
+        }, 100);    </script>
+</body>
+</html>

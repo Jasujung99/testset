@@ -1204,7 +1204,7 @@
                         // 노드 원 그리기 - 크기 키움
                         nodes.append("circle")
                             .attr("class", "node")
-                            .attr("r", d => 8 + (d.value / N) * 18) // 크기 키움: 6+16 -> 8+18
+                            .attr("r", d => 16 + (d.value / N) * 36) // 크기 키움: 6+16 -> 8+18
                             .attr("fill", d => stateColor[d.state] || stateColor.default)
                             .attr("opacity", 0.85)
                             .attr("filter", d => d.state !== 'default' ? 

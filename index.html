@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>수정 동굴의 분자화 (React)</title>
+    <title>성운의 조율 (Stellar Nebula Tuning)</title>
     <!-- React, Babel, D3 로드 -->
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
@@ -11,10 +11,23 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-dark: #050E20;
+            --bg-medium: #091C3E;
+            --bg-light: #0D2A5C;
+            --accent-1: #3C6CDF;
+            --accent-2: #8A4FFF;
+            --accent-3: #F5597F;
+            --accent-4: #57CBFF;
+            --accent-5: #FCBB4A;
+            --text-light: #F0F6FF;
+            --text-muted: #8DA0C7;
+        }
+        
         body { 
             font-family: 'Noto Sans KR', sans-serif; 
-            background-color: #111827;
-            color: #e0e0e0;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -22,84 +35,160 @@
             padding: 1rem;
             margin: 0;
             overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(60, 108, 223, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(138, 79, 255, 0.1) 0%, transparent 25%),
+                radial-gradient(circle at 50% 50%, rgba(245, 89, 127, 0.05) 0%, transparent 40%);
         }
         
-        /* styled-components를 일반 CSS로 변환 */
-        .app-wrapper {
+        .nebula-wrapper {
             width: 100%;
-            max-width: 1200px;
-            background-color: #1f2937;
-            border-radius: 12px;
+            max-width: 1280px;
+            background-color: var(--bg-medium);
+            border-radius: 16px;
             padding: 2rem;
-            border: 1px solid #374151;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(60, 108, 223, 0.3);
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.3), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.2),
+                0 0 40px 5px rgba(60, 108, 223, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nebula-wrapper::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--accent-1), var(--accent-2), var(--accent-3), var(--accent-4));
+            border-radius: 16px 16px 0 0;
         }
         
         .header {
             text-align: center;
             margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
         }
         
         .title {
-            font-size: 2.25rem;
+            font-size: 2.5rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
-            color: #f9fafb;
+            color: var(--text-light);
+            text-shadow: 0 0 15px rgba(60, 108, 223, 0.5);
+            background: linear-gradient(90deg, #FFFFFF, #8A9EDF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .subtitle {
-            color: #9ca3af;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
         }
         
         .controls {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            background-color: #111827;
-            padding: 0.5rem;
-            border-radius: 8px;
-        }
-        
-        .button {
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s, color 0.2s;
-            background-color: #374151;
-            color: #d1d5db;
-        }
-        
-        .button:disabled {
-            background-color: #4b5563;
-            cursor: not-allowed;
-            opacity: 0.5;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            background-color: var(--bg-light);
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
         }
         
         .algo-button {
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
-            border-radius: 6px;
-            border: none;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.95rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             cursor: pointer;
-            transition: background-color 0.2s, color 0.2s;
-            background-color: #374151;
-            color: #d1d5db;
+            transition: all 0.3s ease;
+            background-color: rgba(13, 42, 92, 0.8);
+            color: var(--text-muted);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .algo-button::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .algo-button:hover::before {
+            opacity: 1;
         }
         
         .algo-button.active {
-            background-color: #4f46e5;
+            background-color: var(--accent-1);
             color: white;
             font-weight: 700;
+            box-shadow: 0 0 15px rgba(60, 108, 223, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .algo-button.active[data-algo="bubble"] {
+            background-color: var(--accent-1);
+        }
+        
+        .algo-button.active[data-algo="selection"] {
+            background-color: var(--accent-2);
+        }
+        
+        .algo-button.active[data-algo="insertion"] {
+            background-color: var(--accent-3);
+        }
+        
+        .algo-button.active[data-algo="merge"] {
+            background-color: var(--accent-4);
+        }
+        
+        .algo-button.active[data-algo="quick"] {
+            background-color: var(--accent-5);
+        }
+        
+        .complexity-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+        }
+        
+        .algo-button:hover .complexity-badge,
+        .algo-button.active .complexity-badge {
+            opacity: 1;
+            transform: scale(1);
         }
         
         .main-layout {
             display: grid;
             grid-template-columns: 1fr;
             gap: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         
         @media (min-width: 992px) {
@@ -110,177 +199,505 @@
         
         .vis-container {
             position: relative;
-            background-color: #111827;
-            min-height: 50vh;
-            border-radius: 8px;
+            background-color: var(--bg-dark);
+            min-height: 60vh;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(60, 108, 223, 0.2);
         }
         
-        .info-card-wrapper {
-            background-color: #111827;
+        .vis-container::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 30% 40%, rgba(60, 108, 223, 0.05) 0%, transparent 30%),
+                radial-gradient(circle at 70% 60%, rgba(138, 79, 255, 0.05) 0%, transparent 30%);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        .nebula-card {
+            background-color: var(--bg-light);
             padding: 1.5rem;
-            border-radius: 8px;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(60, 108, 223, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nebula-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+        }
+        
+        .nebula-card[data-algo="bubble"]::before {
+            background: var(--accent-1);
+        }
+        
+        .nebula-card[data-algo="selection"]::before {
+            background: var(--accent-2);
+        }
+        
+        .nebula-card[data-algo="insertion"]::before {
+            background: var(--accent-3);
+        }
+        
+        .nebula-card[data-algo="merge"]::before {
+            background: var(--accent-4);
+        }
+        
+        .nebula-card[data-algo="quick"]::before {
+            background: var(--accent-5);
         }
         
         .info-title {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #818cf8;
             margin-bottom: 1rem;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .info-title[data-algo="bubble"] {
+            color: var(--accent-1);
+        }
+        
+        .info-title[data-algo="selection"] {
+            color: var(--accent-2);
+        }
+        
+        .info-title[data-algo="insertion"] {
+            color: var(--accent-3);
+        }
+        
+        .info-title[data-algo="merge"] {
+            color: var(--accent-4);
+        }
+        
+        .info-title[data-algo="quick"] {
+            color: var(--accent-5);
         }
         
         .info-timer {
             margin-bottom: 1rem;
             font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-timer-icon {
+            font-size: 1.2rem;
+            opacity: 0.7;
         }
         
         .info-timer-value {
             font-weight: 700;
-            color: #facc15;
+            color: var(--accent-5);
+            font-family: monospace;
+            font-size: 1.2rem;
         }
         
         .info-heading {
             font-weight: 700;
-            color: #f9fafb;
-            border-left: 3px solid #818cf8;
-            padding-left: 0.75rem;
+            color: var(--text-light);
             margin-bottom: 0.5rem;
+            position: relative;
+            padding-left: 1rem;
+        }
+        
+        .info-heading::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            border-radius: 3px;
+        }
+        
+        .info-heading[data-algo="bubble"]::before {
+            background: var(--accent-1);
+        }
+        
+        .info-heading[data-algo="selection"]::before {
+            background: var(--accent-2);
+        }
+        
+        .info-heading[data-algo="insertion"]::before {
+            background: var(--accent-3);
+        }
+        
+        .info-heading[data-algo="merge"]::before {
+            background: var(--accent-4);
+        }
+        
+        .info-heading[data-algo="quick"]::before {
+            background: var(--accent-5);
         }
         
         .info-text {
-            color: #9ca3af;
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.6;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            gap: 0.25rem;
+            background-color: rgba(0, 0, 0, 0.3);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
         }
         
         .actions {
             display: flex;
             justify-content: center;
             gap: 1rem;
-            margin-top: 1.5rem;
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .control-button {
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .control-button::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+        
+        .control-button:hover::before {
+            opacity: 1;
         }
         
         .primary-button {
-            background-color: #4f46e5;
+            background-color: var(--accent-1);
             color: white;
             font-weight: 700;
-            padding: 0.75rem 2rem;
+            box-shadow: 0 0 15px rgba(60, 108, 223, 0.3);
         }
         
         .primary-button:hover {
-            background-color: #4338ca;
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(60, 108, 223, 0.5);
         }
         
         .primary-button.running {
-            background-color: #e53e3e;
-        }
-        
-        .primary-button.running:hover {
-            background-color: #c53030;
+            background-color: var(--accent-3);
         }
         
         .secondary-button {
-            background-color: #4b5563;
-            color: white;
-            padding: 0.75rem 2rem;
+            background-color: rgba(60, 108, 223, 0.2);
+            color: var(--text-light);
+            border: 1px solid rgba(60, 108, 223, 0.3);
         }
         
         .secondary-button:hover {
-            background-color: #6b7280;
+            background-color: rgba(60, 108, 223, 0.3);
         }
         
-        /* SVG 스타일 추가 */
+        .speed-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .speed-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        
+        .speed-slider {
+            -webkit-appearance: none;
+            width: 150px;
+            height: 6px;
+            background: var(--bg-dark);
+            outline: none;
+            border-radius: 3px;
+        }
+        
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-1);
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(60, 108, 223, 0.5);
+        }
+        
+        .speed-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-1);
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(60, 108, 223, 0.5);
+        }
+        
+        .speed-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent-4);
+            min-width: 60px;
+            text-align: left;
+        }
+        
+        /* SVG 스타일 */
         svg {
             width: 100%;
             height: 100%;
-            min-height: 300px;
+            min-height: 350px;
         }
         
-        /* 디버그 패널 스타일 */
-        .debug-panel {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: #4ade80;
+        .star {
+            fill: white;
+            opacity: 0.7;
+        }
+        
+        .node-orbit {
+            fill: none;
+            stroke-width: 1;
+            stroke-dasharray: 3 3;
+            opacity: 0.3;
+        }
+        
+        .node {
+            transition: fill 0.3s ease, r 0.3s ease;
+        }
+        
+        .node-label {
+            fill: white;
+            font-size: 9px;
+            text-anchor: middle;
+            font-family: monospace;
+            pointer-events: none;
+        }
+        
+        .recursive-group {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .recursive-group.active {
+            opacity: 1;
+        }
+        
+        .array-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1px;
             padding: 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            max-width: 300px;
-            z-index: 1000;
-            display: none;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            max-width: 90%;
+            overflow-x: auto;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
         }
         
-        /* 상태 뱃지 */
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-left: 0.5rem;
-            background-color: #4f46e5;
+        .array-item {
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            border-radius: 4px;
             color: white;
+            font-weight: bold;
+            font-family: monospace;
+            transition: all 0.3s ease;
+        }
+        
+        .array-item.default {
+            background-color: rgba(60, 108, 223, 0.5);
+        }
+        
+        .array-item.comparing {
+            background-color: rgba(245, 89, 127, 0.8);
+            transform: translateY(-4px);
+        }
+        
+        .array-item.swapped {
+            background-color: rgba(252, 187, 74, 0.8);
+            transform: translateY(-2px) scale(1.1);
+        }
+        
+        .array-item.pivot {
+            background-color: rgba(138, 79, 255, 0.8);
+            transform: translateY(-4px);
+        }
+        
+        .array-item.sorted {
+            background-color: rgba(87, 203, 255, 0.8);
+        }
+        
+        .array-item.min {
+            background-color: rgba(131, 247, 169, 0.8);
+        }
+        
+        .array-item.key {
+            background-color: rgba(252, 187, 74, 0.8);
+        }
+        
+        .array-item.merged {
+            background-color: rgba(87, 203, 255, 0.8);
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* 반응형 스타일 */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 1.8rem;
+            }
+            
+            .subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .algo-button {
+                padding: 0.6rem 1rem;
+                font-size: 0.85rem;
+            }
+            
+            .control-button {
+                padding: 0.6rem 1.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .array-item {
+                width: 20px;
+                height: 20px;
+                font-size: 10px;
+            }
+        }
+        
+        /* 애니메이션 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease;
         }
     </style>
 </head>
 <body>
     <div id="root"></div>
-    <div id="debug-panel" class="debug-panel"></div>
 
     <script type="text/babel">
         // React 컴포넌트 및 앱 로직
         function runApp() {
-            const { useState, useEffect, useRef, useCallback } = React;
-            const N = 30; // 데이터 포인트 수
-
-            // 디버그 로그 함수
-            function debugLog(message) {
-                console.log(`[Debug] ${message}`);
-                const debugPanel = document.getElementById('debug-panel');
-                if (debugPanel) {
-                    const timestamp = new Date().toLocaleTimeString();
-                    debugPanel.innerHTML += `<div>[${timestamp}] ${message}</div>`;
-                    // 최근 로그만 표시
-                    if (debugPanel.children.length > 10) {
-                        debugPanel.removeChild(debugPanel.firstChild);
-                    }
-                }
-            }
-
-            // 개발 환경에서 디버그 패널 표시
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                document.getElementById('debug-panel').style.display = 'block';
-            }
-
-            const infoContent = {
+            const { useState, useEffect, useRef, useCallback, useMemo } = React;
+            const N = 25; // 데이터 포인트 수
+            
+            // 알고리즘 정보
+            const algoInfo = {
                 bubble: { 
-                    title: '지하수 (버블 정렬)', 
-                    concept: '이웃한 두 수정을 비교하여 순서가 잘못되었을 경우 서로의 길이를 바꿉니다. 이 변화의 파동이 수정 배열을 타고 흐르면서 가장 긴 수정이 마지막 위치로 이동합니다.',
+                    title: '흐르는 성운 (버블 정렬)', 
+                    concept: '이웃한 두 별을 비교하여 순서가 잘못되었을 경우 서로의 위치를 바꿉니다. 이 과정은 마치 큰 별이 천천히 성운의 가장자리로 떠오르는 것과 같습니다.',
                     bigO: 'O(n²) - 최악, 평균, 최선 케이스',
-                    features: '안정적이고 단순하지만 대용량 데이터에는 비효율적입니다. 이미 정렬된 데이터에서도 모든 비교를 수행합니다.'
+                    features: '구현이 간단하고 안정적이지만, 효율성이 낮아 큰 데이터셋에는 적합하지 않습니다. 대부분의 상황에서 다른 알고리즘보다 성능이 떨어집니다.',
+                    color: 'var(--accent-1)',
+                    complexity: 'O(n²)'
                 },
                 selection: { 
-                    title: '결정 성장 (선택 정렬)', 
-                    concept: '전체 수정 중에서 가장 길게 자라나야 할 것을 찾아, 그 길이로 즉시 확정시킵니다. 이 과정을 통해 하나씩 위치가 결정됩니다.',
+                    title: '항성 선택 (선택 정렬)', 
+                    concept: '전체 성운에서 가장 밝은 별을 찾아 적절한 위치로 이동시킵니다. 한 번에 하나의 별이 최종 위치를 찾아가는 과정입니다.',
                     bigO: 'O(n²) - 최악, 평균, 최선 케이스',
-                    features: '구현이 간단하고 메모리 사용이 적지만, 비효율적이며 불안정한 정렬 알고리즘입니다.'
+                    features: '메모리 사용이 적고 구현이 쉽지만, 데이터 크기에 관계없이 항상 O(n²)의 시간이 걸립니다. 안정적이지 않은 정렬 알고리즘입니다.',
+                    color: 'var(--accent-2)',
+                    complexity: 'O(n²)'
                 },
                 insertion: { 
-                    title: '동기화 (삽입 정렬)', 
-                    concept: '하나의 수정을 선택하고, 이미 정렬된 이웃 수정들과 길이를 비교하며 자신의 올바른 위치로 이동합니다. 작은 데이터셋에서 효율적입니다.',
+                    title: '궤도 조정 (삽입 정렬)', 
+                    concept: '각 별을 올바른 위치에 삽입하여 부분적으로 정렬된 성운을 점진적으로 구축합니다. 마치 별들이 자신의 올바른 궤도를 찾아가는 것과 같습니다.',
                     bigO: 'O(n²) - 최악/평균, O(n) - 최선 케이스',
-                    features: '정렬된 부분집합을 유지하며 정렬이 거의 완료된 데이터에서 빠르게 작동합니다. 작은 데이터셋에 유용합니다.'
+                    features: '작은 데이터셋이나 거의 정렬된 데이터에 효율적입니다. 온라인 알고리즘으로 데이터가 들어오는 대로 정렬할 수 있습니다.',
+                    color: 'var(--accent-3)',
+                    complexity: 'O(n²)'
+                },
+                merge: { 
+                    title: '성운 병합 (병합 정렬)', 
+                    concept: '성운을 작은 부분으로 나누고, 각 부분을 정렬한 후 병합하는 분할 정복 방식입니다. 재귀적 특성이 돋보이는 알고리즘입니다.',
+                    bigO: 'O(n log n) - 최악, 평균, 최선 케이스',
+                    features: '안정적인 정렬 알고리즘으로 예측 가능한 성능을 제공합니다. 추가 메모리가 필요하지만, 대규모 데이터셋에서도 효율적으로 작동합니다.',
+                    color: 'var(--accent-4)',
+                    complexity: 'O(n log n)'
+                },
+                quick: { 
+                    title: '성운 분할 (퀵 정렬)', 
+                    concept: '피벗 요소를 기준으로 성운을 분할하고 각 부분을 재귀적으로 정렬합니다. 우주에서 은하가 형성되는 과정과 유사합니다.',
+                    bigO: 'O(n²) - 최악, O(n log n) - 평균/최선 케이스',
+                    features: '평균적으로 매우 빠르며 제자리 정렬이 가능합니다. 피벗 선택 방법에 따라 성능이 크게 달라지며, 재귀적 특성을 가집니다.',
+                    color: 'var(--accent-5)',
+                    complexity: 'O(n log n)*'
                 }
             };
 
             // --- 정렬 알고리즘 생성기 ---
+            // 버블 정렬
             function* bubbleSort(arr) { 
-                debugLog("버블 정렬 시작");
+                console.log("버블 정렬 시작");
                 let a = JSON.parse(JSON.stringify(arr)); 
                 for(let i = 0; i < a.length; i++) { 
                     for (let j = 0; j < a.length - i - 1; j++) { 
@@ -301,12 +718,13 @@
                     a[a.length - i - 1].state = 'sorted';
                 }
                 a.forEach(d => d.state = 'sorted');
-                debugLog("버블 정렬 완료");
+                console.log("버블 정렬 완료");
                 return [...a]; // 배열의 복사본을 반환
             }
             
+            // 선택 정렬
             function* selectionSort(arr) { 
-                debugLog("선택 정렬 시작");
+                console.log("선택 정렬 시작");
                 let a = JSON.parse(JSON.stringify(arr)); 
                 for(let i = 0; i < a.length - 1; i++) { 
                     let min_idx = i; 
@@ -338,12 +756,13 @@
                     a[i].state = 'sorted';
                 }
                 a[a.length - 1].state = 'sorted'; // 마지막 요소도 정렬 상태로 표시
-                debugLog("선택 정렬 완료");
+                console.log("선택 정렬 완료");
                 return [...a]; // 배열의 복사본을 반환
             }
             
+            // 삽입 정렬
             function* insertionSort(arr) { 
-                debugLog("삽입 정렬 시작");
+                console.log("삽입 정렬 시작");
                 let a = JSON.parse(JSON.stringify(arr)); 
                 a[0].state = 'sorted'; 
                 yield [...a]; // 배열의 복사본을 반환
@@ -369,30 +788,277 @@
                     yield [...a]; // 배열의 복사본을 반환
                 }
                 
-                debugLog("삽입 정렬 완료");
+                console.log("삽입 정렬 완료");
                 return [...a]; // 배열의 복사본을 반환
             }
+            
+            // 병합 정렬 - 재귀적 구현
+            function* mergeSort(arr, start = 0, end = arr.length - 1, depth = 0) {
+                console.log(`병합 정렬 시작: ${start} ~ ${end}, 깊이: ${depth}`);
+                let a = JSON.parse(JSON.stringify(arr));
+                
+                // 기본 사례: 하나의 요소
+                if (start >= end) {
+                    a[start].state = 'sorted';
+                    yield [...a];
+                    return a;
+                }
+                
+                // 하위 배열로 분할
+                const mid = Math.floor((start + end) / 2);
+                
+                // 모든 요소를 기본 상태로 설정
+                a.forEach(d => d.state = 'default');
+                
+                // 현재 처리 중인 범위 표시
+                for (let i = start; i <= end; i++) {
+                    a[i].state = 'comparing';
+                }
+                yield [...a];
+                
+                // 왼쪽 하위 배열 정렬
+                for (let i = start; i <= mid; i++) {
+                    a[i].state = 'comparing';
+                }
+                for (let i = mid + 1; i <= end; i++) {
+                    a[i].state = 'default';
+                }
+                yield [...a];
+                
+                // 왼쪽 하위 배열을 재귀적으로 정렬
+                const leftGen = mergeSort([...a], start, mid, depth + 1);
+                let leftResult = leftGen.next();
+                while (!leftResult.done) {
+                    // 왼쪽 하위 배열의 결과 복사
+                    for (let i = start; i <= mid; i++) {
+                        a[i] = leftResult.value[i];
+                    }
+                    yield [...a];
+                    leftResult = leftGen.next();
+                }
+                
+                // 왼쪽 결과 통합
+                for (let i = start; i <= mid; i++) {
+                    a[i] = leftResult.value[i];
+                }
+                
+                // 오른쪽 하위 배열 정렬
+                for (let i = start; i <= mid; i++) {
+                    a[i].state = 'sorted';
+                }
+                for (let i = mid + 1; i <= end; i++) {
+                    a[i].state = 'comparing';
+                }
+                yield [...a];
+                
+                // 오른쪽 하위 배열을 재귀적으로 정렬
+                const rightGen = mergeSort([...a], mid + 1, end, depth + 1);
+                let rightResult = rightGen.next();
+                while (!rightResult.done) {
+                    // 오른쪽 하위 배열의 결과 복사
+                    for (let i = mid + 1; i <= end; i++) {
+                        a[i] = rightResult.value[i];
+                    }
+                    yield [...a];
+                    rightResult = rightGen.next();
+                }
+                
+                // 오른쪽 결과 통합
+                for (let i = mid + 1; i <= end; i++) {
+                    a[i] = rightResult.value[i];
+                }
+                
+                // 두 정렬된 하위 배열 병합
+                let temp = new Array(end - start + 1);
+                let i = start, j = mid + 1, k = 0;
+                
+                // 병합 과정 시각화
+                a.forEach(d => {
+                    if (d.state !== 'sorted') d.state = 'default';
+                });
+                
+                while (i <= mid && j <= end) {
+                    a[i].state = 'comparing';
+                    a[j].state = 'comparing';
+                    yield [...a];
+                    
+                    if (a[i].value <= a[j].value) {
+                        temp[k] = {...a[i]};
+                        temp[k].state = 'merged';
+                        i++;
+                    } else {
+                        temp[k] = {...a[j]};
+                        temp[k].state = 'merged';
+                        j++;
+                    }
+                    k++;
+                }
+                
+                // 남은 요소 복사
+                while (i <= mid) {
+                    a[i].state = 'comparing';
+                    yield [...a];
+                    temp[k] = {...a[i]};
+                    temp[k].state = 'merged';
+                    i++;
+                    k++;
+                }
+                
+                while (j <= end) {
+                    a[j].state = 'comparing';
+                    yield [...a];
+                    temp[k] = {...a[j]};
+                    temp[k].state = 'merged';
+                    j++;
+                    k++;
+                }
+                
+                // 임시 배열에서 원래 배열로 요소 복사
+                for (let i = 0; i < temp.length; i++) {
+                    a[start + i] = temp[i];
+                    a[start + i].state = 'sorted';
+                }
+                yield [...a];
+                
+                console.log(`병합 정렬 완료: ${start} ~ ${end}, 깊이: ${depth}`);
+                return a;
+            }
+            
+            // 퀵 정렬
+            function* quickSort(arr, start = 0, end = arr.length - 1, depth = 0) {
+                console.log(`퀵 정렬 시작: ${start} ~ ${end}, 깊이: ${depth}`);
+                let a = JSON.parse(JSON.stringify(arr));
+                
+                if (start >= end) {
+                    if (start === end) a[start].state = 'sorted';
+                    return a;
+                }
+                
+                // 현재 처리 중인 범위 표시
+                a.forEach(d => d.state = 'default');
+                for (let i = start; i <= end; i++) {
+                    a[i].state = 'comparing';
+                }
+                yield [...a];
+                
+                // 피벗 선택 (마지막 요소)
+                const pivotIndex = end;
+                a[pivotIndex].state = 'pivot';
+                yield [...a];
+                
+                // 파티션 과정
+                let i = start - 1;
+                
+                for (let j = start; j < end; j++) {
+                    a[j].state = 'comparing';
+                    yield [...a];
+                    
+                    if (a[j].value <= a[pivotIndex].value) {
+                        i++;
+                        a[i].state = 'comparing';
+                        yield [...a];
+                        
+                        // 교환
+                        if (i !== j) {
+                            const temp = {...a[i]};
+                            a[i] = {...a[j]};
+                            a[j] = temp;
+                            a[i].state = 'swapped';
+                            a[j].state = 'swapped';
+                            yield [...a];
+                        }
+                    }
+                    
+                    a[j].state = 'default';
+                }
+                
+                // 피벗을 올바른 위치로 이동
+                i++;
+                const temp = {...a[i]};
+                a[i] = {...a[pivotIndex]};
+                a[pivotIndex] = temp;
+                a[i].state = 'sorted';
+                yield [...a];
+                
+                // 재귀적으로 피벗 왼쪽 정렬
+                if (start < i - 1) {
+                    const leftGen = quickSort([...a], start, i - 1, depth + 1);
+                    let leftResult = leftGen.next();
+                    while (!leftResult.done) {
+                        // 왼쪽 부분의 결과 복사
+                        for (let k = start; k <= i - 1; k++) {
+                            a[k] = leftResult.value[k];
+                        }
+                        yield [...a];
+                        leftResult = leftGen.next();
+                    }
+                    
+                    // 최종 왼쪽 결과 통합
+                    if (leftResult.value) {
+                        for (let k = start; k <= i - 1; k++) {
+                            a[k] = leftResult.value[k];
+                        }
+                    }
+                }
+                
+                // 재귀적으로 피벗 오른쪽 정렬
+                if (i + 1 < end) {
+                    const rightGen = quickSort([...a], i + 1, end, depth + 1);
+                    let rightResult = rightGen.next();
+                    while (!rightResult.done) {
+                        // 오른쪽 부분의 결과 복사
+                        for (let k = i + 1; k <= end; k++) {
+                            a[k] = rightResult.value[k];
+                        }
+                        yield [...a];
+                        rightResult = rightGen.next();
+                    }
+                    
+                    // 최종 오른쪽 결과 통합
+                    if (rightResult.value) {
+                        for (let k = i + 1; k <= end; k++) {
+                            a[k] = rightResult.value[k];
+                        }
+                    }
+                }
+                
+                // 정렬 완료 표시
+                for (let k = start; k <= end; k++) {
+                    a[k].state = 'sorted';
+                }
+                yield [...a];
+                
+                console.log(`퀵 정렬 완료: ${start} ~ ${end}, 깊이: ${depth}`);
+                return a;
+            }
+            
+            // 정렬 알고리즘 매핑
+            const sortGenerators = { 
+                bubble: bubbleSort, 
+                selection: selectionSort, 
+                insertion: insertionSort,
+                merge: mergeSort,
+                quick: quickSort
+            };
 
-            const sortGenerators = { bubble: bubbleSort, selection: selectionSort, insertion: insertionSort };
-
-            // --- React Components ---
-            // D3 시각화 컴포넌트
-            const Visualization = ({ data }) => {
+            // 우주 시각화 컴포넌트
+            const NebulaVisualization = ({ data, algorithm }) => {
                 const svgRef = useRef();
                 const containerRef = useRef();
-
+                
+                // 별자리 시각화 적용
                 useEffect(() => {
                     if (!data || data.length === 0 || !containerRef.current || !svgRef.current) {
-                        debugLog("시각화 데이터 또는 DOM 요소 없음");
+                        console.log("시각화 데이터 또는 DOM 요소 없음");
                         return;
                     }
 
-                    debugLog(`시각화 업데이트: ${data.length}개 데이터`);
+                    console.log(`시각화 업데이트: ${data.length}개 데이터, 알고리즘: ${algorithm}`);
                     
                     const containerEl = containerRef.current;
-                    const width = containerEl.clientWidth || 500;
-                    const height = containerEl.clientHeight || 400;
-
+                    const width = containerEl.clientWidth || 600;
+                    const height = containerEl.clientHeight || 500;
+                    
                     const svg = d3.select(svgRef.current)
                         .attr("width", width)
                         .attr("height", height);
@@ -400,44 +1066,192 @@
                     // 이전 요소 제거
                     svg.selectAll("*").remove();
                     
-                    const g = svg.append("g")
-                        .attr("transform", `translate(${width / 2}, ${height / 2})`);
-
-                    const maxRadius = Math.min(width, height) / 2 - 20;
-                    const angleScale = d3.scaleLinear().domain([0, N]).range([0, 2 * Math.PI]);
-                    const lengthScale = d3.scaleLinear().domain([0, N]).range([10, maxRadius - 20]);
+                    // 배경 그룹
+                    const background = svg.append("g").attr("class", "background");
                     
-                    const arcGenerator = d3.arc()
-                        .outerRadius(maxRadius)
-                        .innerRadius(d => maxRadius - lengthScale(d.data.value))
-                        .startAngle(d => angleScale(d.index))
-                        .endAngle(d => angleScale(d.index + 1))
-                        .padAngle(0.02)
-                        .padRadius(maxRadius);
+                    // 배경에 별 생성
+                    const starCount = 100;
+                    const stars = Array.from({ length: starCount }, () => ({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        r: Math.random() * 1.5 + 0.5
+                    }));
                     
-                    const pieData = d3.pie()
-                        .value(() => 1)
-                        .sort(null)(data);
-                    
-                    const colorScale = d3.scaleSequential(d3.interpolateCool).domain([N, 1]);
-                    const stateColor = {
-                        'comparing': '#F56565',  // 빨강
-                        'swapped': '#ED8936',    // 주황
-                        'key': '#ECC94B',        // 노랑
-                        'min': '#ED64A6',        // 분홍
-                        'sorted': '#48BB78',     // 초록
-                        'default': null          // 기본값 (colorScale 사용)
-                    };
-
-                    g.selectAll('path')
-                        .data(pieData)
+                    background.selectAll(".star")
+                        .data(stars)
                         .enter()
-                        .append('path')
-                        .attr('d', arcGenerator)
-                        .attr('fill', d => stateColor[d.data.state] || colorScale(d.data.value))
-                        .attr('stroke', '#1a202c')
-                        .attr('stroke-width', 1);
-                }, [data]);
+                        .append("circle")
+                        .attr("class", "star")
+                        .attr("cx", d => d.x)
+                        .attr("cy", d => d.y)
+                        .attr("r", d => d.r)
+                        .attr("fill", "white")
+                        .attr("opacity", () => Math.random() * 0.5 + 0.3);
+                    
+                    // 메인 시각화
+                    const centerX = width / 2;
+                    const centerY = height / 2;
+                    const maxRadius = Math.min(width, height) / 2 - 70;
+                    
+                    // 중심 "별" 생성
+                    svg.append("circle")
+                        .attr("cx", centerX)
+                        .attr("cy", centerY)
+                        .attr("r", 15)
+                        .attr("fill", algoInfo[algorithm].color)
+                        .attr("filter", "drop-shadow(0 0 8px " + algoInfo[algorithm].color + ")");
+                    
+                    // 데이터 시각화 방식 선택
+                    const isRecursive = algorithm === 'merge' || algorithm === 'quick';
+                    
+                    if (isRecursive) {
+                        // 재귀적 알고리즘을 위한 계층적 시각화
+                        const levelScale = d3.scaleLinear()
+                            .domain([0, 5])  // 최대 재귀 깊이
+                            .range([maxRadius * 0.3, maxRadius]);
+                        
+                        // 노드 그룹 (크기에 따라 정렬)
+                        const sortedData = [...data].sort((a, b) => a.value - b.value);
+                        
+                        // 기본 궤도 생성
+                        const orbits = 3;
+                        const orbitGroup = svg.append("g")
+                            .attr("transform", `translate(${centerX}, ${centerY})`);
+                        
+                        for (let i = 1; i <= orbits; i++) {
+                            const orbitRadius = levelScale(i);
+                            orbitGroup.append("circle")
+                                .attr("class", "node-orbit")
+                                .attr("r", orbitRadius)
+                                .attr("stroke", `rgba(255,255,255,${0.3 - i * 0.05})`)
+                                .attr("fill", "none");
+                        }
+                        
+                        // 데이터 요소에 대한 그룹
+                        const nodesGroup = svg.append("g")
+                            .attr("transform", `translate(${centerX}, ${centerY})`);
+                        
+                        // 노드 위치 계산
+                        const angleScale = d3.scaleLinear()
+                            .domain([0, data.length])
+                            .range([0, Math.PI * 2]);
+                        
+                        const nodes = nodesGroup.selectAll(".node")
+                            .data(data)
+                            .enter()
+                            .append("g")
+                            .attr("class", "node-group")
+                            .attr("transform", (d, i) => {
+                                // 노드의 값에 따라 다른 궤도에 배치
+                                const orbitLevel = Math.ceil((d.value / N) * orbits);
+                                const radius = levelScale(orbitLevel);
+                                const angle = angleScale(i);
+                                return `translate(${radius * Math.cos(angle)}, ${radius * Math.sin(angle)})`;
+                            });
+                        
+                        // 상태에 따른 색상 매핑
+                        const stateColor = {
+                            'comparing': '#F56565',  // 빨강
+                            'swapped': '#ED8936',    // 주황
+                            'pivot': '#8A4FFF',      // 보라
+                            'key': '#ECC94B',        // 노랑
+                            'min': '#ED64A6',        // 분홍
+                            'sorted': '#57CBFF',     // 하늘
+                            'merged': '#57CBFF',     // 하늘
+                            'default': '#3C6CDF'     // 파랑
+                        };
+                        
+                        // 노드 원 그리기
+                        nodes.append("circle")
+                            .attr("class", "node")
+                            .attr("r", d => 5 + (d.value / N) * 15)
+                            .attr("fill", d => stateColor[d.state] || stateColor.default)
+                            .attr("opacity", 0.8)
+                            .attr("filter", d => d.state !== 'default' ? 
+                                  `drop-shadow(0 0 5px ${stateColor[d.state]})` : 'none');
+                        
+                        // 노드 값 텍스트
+                        nodes.append("text")
+                            .attr("class", "node-label")
+                            .attr("dy", ".3em")
+                            .text(d => d.value);
+                    } else {
+                        // 비재귀적 알고리즘을 위한 나선형 시각화
+                        const spiralGroup = svg.append("g")
+                            .attr("transform", `translate(${centerX}, ${centerY})`);
+                        
+                        // 나선 간격 계산
+                        const spiralStep = 15;
+                        const spiralB = spiralStep / (2 * Math.PI);
+                        
+                        // 상태에 따른 색상 매핑
+                        const stateColor = {
+                            'comparing': '#F56565',  // 빨강
+                            'swapped': '#ED8936',    // 주황
+                            'key': '#ECC94B',        // 노랑
+                            'min': '#ED64A6',        // 분홍
+                            'sorted': '#57CBFF',     // 하늘
+                            'default': '#3C6CDF'     // 파랑
+                        };
+                        
+                        // 데이터를 나선형으로 배치
+                        const nodes = spiralGroup.selectAll(".node")
+                            .data(data)
+                            .enter()
+                            .append("g")
+                            .attr("class", "node-group")
+                            .attr("transform", (d, i) => {
+                                const angle = 0.5 * i;
+                                const radius = spiralB * angle;
+                                return `translate(${radius * Math.cos(angle)}, ${radius * Math.sin(angle)})`;
+                            });
+                        
+                        // 노드 원 그리기
+                        nodes.append("circle")
+                            .attr("class", "node")
+                            .attr("r", d => 5 + (d.value / N) * 15)
+                            .attr("fill", d => stateColor[d.state] || stateColor.default)
+                            .attr("opacity", 0.8)
+                            .attr("filter", d => d.state !== 'default' ? 
+                                  `drop-shadow(0 0 5px ${stateColor[d.state]})` : 'none');
+                        
+                        // 노드 값 텍스트
+                        nodes.append("text")
+                            .attr("class", "node-label")
+                            .attr("dy", ".3em")
+                            .text(d => d.value);
+                        
+                        // 나선형 경로 그리기
+                        const spiral = d3.lineRadial()
+                            .angle(d => d)
+                            .radius(d => spiralB * d);
+                        
+                        const spiralPoints = Array.from({ length: data.length * 3 }, (_, i) => i * 0.1);
+                        
+                        spiralGroup.append("path")
+                            .datum(spiralPoints)
+                            .attr("d", spiral)
+                            .attr("fill", "none")
+                            .attr("stroke", "rgba(255,255,255,0.2)")
+                            .attr("stroke-width", 1)
+                            .attr("stroke-dasharray", "3,3");
+                    }
+                    
+                    // 배열 시각화를 위한 컨테이너
+                    const arrayContainer = document.createElement("div");
+                    arrayContainer.className = "array-container";
+                    containerEl.appendChild(arrayContainer);
+                    
+                    // 배열 요소 생성
+                    arrayContainer.innerHTML = '';
+                    data.forEach(item => {
+                        const arrayItem = document.createElement("div");
+                        arrayItem.className = `array-item ${item.state || 'default'}`;
+                        arrayItem.textContent = item.value;
+                        arrayContainer.appendChild(arrayItem);
+                    });
+                    
+                }, [data, algorithm]);
 
                 return (
                     <div className="vis-container" ref={containerRef}>
@@ -448,20 +1262,31 @@
             
             // 정보 카드 컴포넌트
             const InfoCard = ({ algo, time, isSorting }) => {
-                const content = infoContent[algo];
+                const content = algoInfo[algo];
                 return (
-                    <div className="info-card-wrapper">
-                        <h2 className="info-title">
+                    <div className="nebula-card" data-algo={algo}>
+                        <h2 className="info-title" data-algo={algo}>
                             {content.title}
-                            {isSorting && <span className="status-badge">정렬 중</span>}
+                            {isSorting && (
+                                <span className="status-badge">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <path d="M12 6v6l4 2" />
+                                    </svg>
+                                    조율 중
+                                </span>
+                            )}
                         </h2>
-                        <div className="info-timer">걸린 시간: <span className="info-timer-value">{time.toFixed(2)} 초</span></div>
+                        <div className="info-timer">
+                            <span className="info-timer-icon">⏱️</span>
+                            <span className="info-timer-value">{time.toFixed(2)} 초</span>
+                        </div>
                         <div>
-                            <h3 className="info-heading">핵심 원리</h3>
+                            <h3 className="info-heading" data-algo={algo}>핵심 원리</h3>
                             <p className="info-text">{content.concept}</p>
-                            <h3 className="info-heading">시간 복잡도</h3>
+                            <h3 className="info-heading" data-algo={algo}>시간 복잡도</h3>
                             <p className="info-text" style={{fontFamily: 'monospace'}}>{content.bigO}</p>
-                            <h3 className="info-heading">특징</h3>
+                            <h3 className="info-heading" data-algo={algo}>특징</h3>
                             <p className="info-text">{content.features}</p>
                         </div>
                     </div>
@@ -474,6 +1299,7 @@
                 const [algorithm, setAlgorithm] = useState('bubble');
                 const [isSorting, setIsSorting] = useState(false);
                 const [time, setTime] = useState(0);
+                const [speed, setSpeed] = useState(75); // 속도 제어 (ms)
                 
                 const animationRef = useRef(null);
                 const timerRef = useRef(null);
@@ -482,7 +1308,7 @@
 
                 // 초기 데이터 생성
                 const generateNewData = useCallback(() => {
-                    debugLog("새 데이터 생성");
+                    console.log("새 데이터 생성");
                     const newData = Array.from({ length: N }, (_, i) => ({
                         value: i + 1,
                         id: i,
@@ -498,12 +1324,12 @@
 
                 // 컴포넌트 마운트 시 초기화
                 useEffect(() => {
-                    debugLog("앱 초기화");
+                    console.log("앱 초기화");
                     setData(generateNewData());
                     
                     // 컴포넌트 언마운트 시 정리
                     return () => {
-                        debugLog("앱 정리");
+                        console.log("앱 정리");
                         clearAnimationFrame();
                     };
                 }, [generateNewData]);
@@ -522,7 +1348,7 @@
                 
                 // 정렬 중지 함수
                 const stopSorting = () => {
-                    debugLog("정렬 중지");
+                    console.log("정렬 중지");
                     clearAnimationFrame();
                     setIsSorting(false);
                     generatorRef.current = null;
@@ -530,7 +1356,7 @@
                 
                 // 리셋 핸들러
                 const handleReset = () => {
-                    debugLog("초기화 버튼 클릭");
+                    console.log("초기화 버튼 클릭");
                     if (isSorting) {
                         stopSorting();
                     }
@@ -541,10 +1367,10 @@
                 // 정렬 시작/중지 토글 핸들러
                 const handleStartStop = () => {
                     if (isSorting) {
-                        debugLog("정렬 중지 버튼 클릭");
+                        console.log("정렬 중지 버튼 클릭");
                         stopSorting();
                     } else {
-                        debugLog("정렬 시작 버튼 클릭");
+                        console.log("정렬 시작 버튼 클릭");
                         startSorting();
                     }
                 };
@@ -571,16 +1397,15 @@
                                 
                                 if (!result.done) {
                                     setData(result.value);
-                                    animationRef.current = setTimeout(animate, 75);
+                                    animationRef.current = setTimeout(animate, speed);
                                 } else {
                                     clearAnimationFrame();
                                     setIsSorting(false);
                                     setData(result.value);
-                                    debugLog("정렬 완료");
+                                    console.log("정렬 완료");
                                 }
                             } catch (error) {
                                 console.error("애니메이션 오류:", error);
-                                debugLog(`애니메이션 오류: ${error.message}`);
                                 clearAnimationFrame();
                                 setIsSorting(false);
                             }
@@ -591,7 +1416,6 @@
                         
                     } catch (error) {
                         console.error("정렬 시작 오류:", error);
-                        debugLog(`정렬 시작 오류: ${error.message}`);
                         clearAnimationFrame();
                         setIsSorting(false);
                     }
@@ -601,7 +1425,7 @@
                 const handleAlgorithmChange = (algo) => {
                     if (algo === algorithm) return; // 같은 알고리즘이면 무시
                     
-                    debugLog(`알고리즘 변경: ${algo}`);
+                    console.log(`알고리즘 변경: ${algo}`);
                     
                     // 정렬 중이면 중지
                     if (isSorting) {
@@ -613,42 +1437,84 @@
                     setTime(0);
                     setData(generateNewData());
                 };
+                
+                // 속도 변경 핸들러
+                const handleSpeedChange = (e) => {
+                    const newSpeed = parseInt(e.target.value);
+                    setSpeed(newSpeed);
+                };
+                
+                // 속도 텍스트 포맷
+                const formatSpeed = (speedValue) => {
+                    if (speedValue >= 100) return "느림";
+                    if (speedValue >= 50) return "보통";
+                    return "빠름";
+                };
 
                 return (
-                    <div className="app-wrapper">
+                    <div className="nebula-wrapper">
                         <header className="header">
-                            <h1 className="title">수정 동굴의 분자화</h1>
-                            <p className="subtitle">React로 재구성한 알고리즘</p>
+                            <h1 className="title">성운의 조율</h1>
+                                                        <p className="subtitle">다양한 정렬 알고리즘의 작동 원리를 우주의 성운처럼 시각화합니다</p>
                         </header>
                         
                         <div className="controls">
-                            {Object.keys(infoContent).map(key => (
+                            {Object.keys(algoInfo).map(key => (
                                 <button 
                                     key={key}
                                     className={`algo-button ${algorithm === key ? 'active' : ''}`}
                                     onClick={() => handleAlgorithmChange(key)}
+                                    data-algo={key}
                                 >
-                                    {infoContent[key].title}
+                                    {algoInfo[key].title.split(' ')[0]}
+                                    <span className="complexity-badge">{algoInfo[key].complexity}</span>
                                 </button>
                             ))}
                         </div>
 
                         <main className="main-layout">
-                            <Visualization data={data} />
+                            <NebulaVisualization data={data} algorithm={algorithm} />
                             <InfoCard algo={algorithm} time={time} isSorting={isSorting} />
                         </main>
 
+                        <div className="speed-control">
+                            <span className="speed-label">속도:</span>
+                            <input 
+                                type="range" 
+                                min="10" 
+                                max="150" 
+                                value={speed}
+                                onChange={handleSpeedChange}
+                                className="speed-slider"
+                                disabled={isSorting}
+                            />
+                            <span className="speed-value">{formatSpeed(speed)}</span>
+                        </div>
+
                         <div className="actions">
                             <button 
-                                className={`button primary-button ${isSorting ? 'running' : ''}`}
+                                className={`control-button primary-button ${isSorting ? 'running' : ''}`}
                                 onClick={handleStartStop}
                             >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    {isSorting ? (
+                                        <><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></>
+                                    ) : (
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    )}
+                                </svg>
                                 {isSorting ? '중지' : '시작'}
                             </button>
                             <button 
-                                className="button secondary-button" 
+                                className="control-button secondary-button" 
                                 onClick={handleReset}
                             >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M3 2v6h6"></path>
+                                    <path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path>
+                                    <path d="M21 22v-6h-6"></path>
+                                    <path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path>
+                                </svg>
                                 초기화
                             </button>
                         </div>
@@ -661,7 +1527,7 @@
                 const container = document.getElementById('root');
                 const root = ReactDOM.createRoot(container);
                 root.render(<App />);
-                debugLog("React 앱 렌더링 완료");
+                console.log("React 앱 렌더링 완료");
             } catch (error) {
                 console.error("React 렌더링 오류:", error);
                 document.getElementById('root').innerHTML = `
@@ -700,8 +1566,22 @@
             } catch (error) {
                 console.error("라이브러리 체크 중 오류:", error);
                 clearInterval(readyCheck);
+                document.getElementById('root').innerHTML = `
+                    <div style="color: white; text-align: center; padding: 20px;">
+                        <h2>라이브러리 로드 중 오류가 발생했습니다</h2>
+                        <p>${error.message}</p>
+                    </div>
+                `;
             }
         }, 100);
+        
+        // 파비콘 오류 방지
+        window.addEventListener('load', () => {
+            const link = document.createElement('link');
+            link.rel = 'icon';
+            link.href = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="0.9em" font-size="90">🌌</text></svg>';
+            document.head.appendChild(link);
+        });
     </script>
 </body>
 </html>

@@ -587,19 +587,36 @@
                             'sorted': '#57CBFF',
                             'default': '#3C6CDF'
                         };
+const angleIncrement = 0.5; // 별들 사이의 일반 간격
+const firstStarOffset = 10.5; // 첫 번째 별만을 위한 특별 오프셋
+
+const nodes = spiralGroup.selectAll(".node")
+    .data(data)
+    .enter()
+    .append("g")
+    .attr("class", "node-group")
+    .attr("transform", (d, i) => {
+        // 첫 번째 별(i=0)에만 특별 오프셋 적용, 나머지는 일반 간격 유지
+        const angle = i === 0 
+            ? firstStarOffset 
+            : angleIncrement * i + firstStarOffset;
+        const radius = spiralB * angle;
+        return `translate(${radius * Math.cos(angle)}, ${radius * Math.sin(angle)})`;
+    });
                         
-                        const angleIncrement = 0.1;
-                        const initialOffset = 2.5;
                         
-                        const nodes = spiralGroup.selectAll(".node")
-                            .data(data)
-                            .enter()
-                            .append("g")
-                            .attr("transform", (d, i) => {
-                                const angle = angleIncrement * (i + initialOffset);
-                                const radius = spiralB * angle;
-                                return `translate(${radius * Math.cos(angle)}, ${radius * Math.sin(angle)})`;
-                            });
+                    //    const angleIncrement = 0.1;
+                    //    const initialOffset = 2.5;
+                        
+                     //   const nodes = spiralGroup.selectAll(".node")
+                     //       .data(data)
+                     //       .enter()
+                     //       .append("g")
+                     //       .attr("transform", (d, i) => {
+                     //           const angle = angleIncrement * (i + initialOffset);
+                     //           const radius = spiralB * angle;
+                     //           return `translate(${radius * Math.cos(angle)}, ${radius * Math.sin(angle)})`;
+                     //       });
                         
                         nodes.append("circle")
                             .attr("r", d => 8 + (d.value / N) * 18)

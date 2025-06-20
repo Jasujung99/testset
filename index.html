@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>수정 동굴의 분자화 (React)</title>
     <!-- React, Babel, D3 로드 -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
@@ -21,6 +21,7 @@
             min-height: 100vh;
             padding: 1rem;
             margin: 0;
+            overflow-x: hidden;
         }
         
         /* styled-components를 일반 CSS로 변환 */
@@ -190,22 +191,58 @@
             background-color: #6b7280;
         }
         
-        /* 파비콘 오류 방지용 */
-        link[rel="icon"] {
+        /* SVG 스타일 추가 */
+        svg {
+            width: 100%;
+            height: 100%;
+            min-height: 300px;
+        }
+        
+        /* 디버그 패널 스타일 */
+        .debug-panel {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #4ade80;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 1000;
             display: none;
         }
     </style>
 </head>
 <body>
     <div id="root"></div>
+    <div id="debug-panel" class="debug-panel"></div>
 
     <script type="text/babel">
         // React 컴포넌트 및 앱 로직
-        function runWhenReady() {
+        function runApp() {
             const { useState, useEffect, useRef, useCallback } = React;
-            const { createRoot } = ReactDOM;
+            const N = 30; // 데이터 포인트 수
 
-            const N = 30;
+            // 디버그 로그 함수
+            function debugLog(message) {
+                console.log(`[Debug] ${message}`);
+                const debugPanel = document.getElementById('debug-panel');
+                if (debugPanel) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    debugPanel.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+                    // 최근 로그만 표시
+                    if (debugPanel.children.length > 10) {
+                        debugPanel.removeChild(debugPanel.firstChild);
+                    }
+                }
+            }
+
+            // 개발 환경에서 디버그 패널 표시
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                document.getElementById('debug-panel').style.display = 'block';
+            }
+
             const infoContent = {
                 bubble: { 
                     title: '지하수 (버블 정렬)', 
@@ -229,131 +266,163 @@
 
             // --- 정렬 알고리즘 생성기 ---
             function* bubbleSort(arr) { 
+                debugLog("버블 정렬 시작");
                 let a = JSON.parse(JSON.stringify(arr)); 
                 for(let i = 0; i < a.length; i++) { 
                     for (let j = 0; j < a.length - i - 1; j++) { 
                         a.forEach(d => { if(d.state !== 'sorted') d.state = 'default'; });
                         a[j].state = 'comparing'; 
                         a[j+1].state = 'comparing';
-                        yield a;
+                        yield [...a]; // 배열의 복사본을 반환
                         
                         if (a[j].value > a[j+1].value) {
-                            [a[j], a[j+1]] = [a[j+1], a[j]];
+                            const temp = {...a[j]};
+                            a[j] = {...a[j+1]};
+                            a[j+1] = temp;
                             a[j].state = 'swapped';
                             a[j+1].state = 'swapped';
-                            yield a;
+                            yield [...a]; // 배열의 복사본을 반환
                         }
                     }
                     a[a.length - i - 1].state = 'sorted';
                 }
                 a.forEach(d => d.state = 'sorted');
-                return a;
+                debugLog("버블 정렬 완료");
+                return [...a]; // 배열의 복사본을 반환
             }
             
             function* selectionSort(arr) { 
+                debugLog("선택 정렬 시작");
                 let a = JSON.parse(JSON.stringify(arr)); 
                 for(let i = 0; i < a.length - 1; i++) { 
                     let min_idx = i; 
                     a.forEach((d, k) => d.state = k < i ? 'sorted' : 'default');
                     a[min_idx].state = 'min';
-                    yield a;
+                    yield [...a]; // 배열의 복사본을 반환
                     
                     for(let j = i + 1; j < a.length; j++) {
                         a[j].state = 'comparing';
-                        yield a;
+                        yield [...a]; // 배열의 복사본을 반환
                         
                         if (a[j].value < a[min_idx].value) {
                             a[min_idx].state = 'default';
                             min_idx = j;
                             a[min_idx].state = 'min';
-                            yield a;
+                            yield [...a]; // 배열의 복사본을 반환
                         } else {
                             a[j].state = 'default';
                         }
                     }
                     
                     if (min_idx !== i) {
-                        [a[i], a[min_idx]] = [a[min_idx], a[i]];
+                        const temp = {...a[i]};
+                        a[i] = {...a[min_idx]};
+                        a[min_idx] = temp;
                         a[i].state = 'sorted';
-                        yield a;
+                        yield [...a]; // 배열의 복사본을 반환
                     }
                     a[i].state = 'sorted';
                 }
-                a.forEach(d => d.state = 'sorted');
-                return a;
+                a[a.length - 1].state = 'sorted'; // 마지막 요소도 정렬 상태로 표시
+                debugLog("선택 정렬 완료");
+                return [...a]; // 배열의 복사본을 반환
             }
             
             function* insertionSort(arr) { 
+                debugLog("삽입 정렬 시작");
                 let a = JSON.parse(JSON.stringify(arr)); 
                 a[0].state = 'sorted'; 
+                yield [...a]; // 배열의 복사본을 반환
+                
                 for(let i = 1; i < a.length; i++) { 
-                    let key = a[i]; 
+                    let key = {...a[i]}; // 객체 복사
                     let j = i - 1; 
+                    
                     a.forEach((d, k) => d.state = k < i ? 'sorted' : 'default');
                     a[i].state = 'key';
-                    yield a;
+                    yield [...a]; // 배열의 복사본을 반환
                     
                     while (j >= 0 && a[j].value > key.value) {
                         a[j].state = 'comparing';
-                        yield a;
-                        a[j+1] = a[j];
+                        yield [...a]; // 배열의 복사본을 반환
+                        
+                        a[j+1] = {...a[j]}; // 객체 복사
                         j--;
                     }
+                    
                     a[j+1] = key;
                     a.forEach((d, k) => d.state = k <= i ? 'sorted' : 'default');
-                    yield a;
+                    yield [...a]; // 배열의 복사본을 반환
                 }
-                return a;
+                
+                debugLog("삽입 정렬 완료");
+                return [...a]; // 배열의 복사본을 반환
             }
 
             const sortGenerators = { bubble: bubbleSort, selection: selectionSort, insertion: insertionSort };
 
             // --- React Components ---
+            // D3 시각화 컴포넌트
             const Visualization = ({ data }) => {
                 const svgRef = useRef();
                 const containerRef = useRef();
 
                 useEffect(() => {
-                    if (!data || data.length === 0 || !containerRef.current) return;
+                    if (!data || data.length === 0 || !containerRef.current || !svgRef.current) {
+                        debugLog("시각화 데이터 또는 DOM 요소 없음");
+                        return;
+                    }
 
+                    debugLog(`시각화 업데이트: ${data.length}개 데이터`);
+                    
                     const containerEl = containerRef.current;
-                    const width = containerEl.clientWidth;
-                    const height = containerEl.clientHeight;
+                    const width = containerEl.clientWidth || 500;
+                    const height = containerEl.clientHeight || 400;
 
                     const svg = d3.select(svgRef.current)
                         .attr("width", width)
                         .attr("height", height);
                     
-                    const g = svg.selectAll("g").data([null]).join("g")
+                    // 이전 요소 제거
+                    svg.selectAll("*").remove();
+                    
+                    const g = svg.append("g")
                         .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
                     const maxRadius = Math.min(width, height) / 2 - 20;
                     const angleScale = d3.scaleLinear().domain([0, N]).range([0, 2 * Math.PI]);
                     const lengthScale = d3.scaleLinear().domain([0, N]).range([10, maxRadius - 20]);
+                    
                     const arcGenerator = d3.arc()
                         .outerRadius(maxRadius)
                         .innerRadius(d => maxRadius - lengthScale(d.data.value))
-                        .startAngle((d) => angleScale(d.index))
-                        .endAngle((d) => angleScale(d.index + 1))
+                        .startAngle(d => angleScale(d.index))
+                        .endAngle(d => angleScale(d.index + 1))
                         .padAngle(0.02)
                         .padRadius(maxRadius);
                     
-                    const pieData = d3.pie().value(() => 1).sort(null)(data);
+                    const pieData = d3.pie()
+                        .value(() => 1)
+                        .sort(null)(data);
+                    
                     const colorScale = d3.scaleSequential(d3.interpolateCool).domain([N, 1]);
-                    const stateColor = d3.scaleOrdinal()
-                        .domain(['comparing', 'swapped', 'key', 'min'])
-                        .range(['#F56565', '#ED8936', '#ECC94B', '#ED64A6']);
+                    const stateColor = {
+                        'comparing': '#F56565',  // 빨강
+                        'swapped': '#ED8936',    // 주황
+                        'key': '#ECC94B',        // 노랑
+                        'min': '#ED64A6',        // 분홍
+                        'sorted': '#48BB78',     // 초록
+                        'default': null          // 기본값 (colorScale 사용)
+                    };
 
-                    g.selectAll("path").data(pieData, d => d.data.id)
-                        .join(
-                            enter => enter.append("path")
-                                .attr("d", arcGenerator)
-                                .attr("fill", d => stateColor(d.data.state) || colorScale(d.data.value)),
-                            update => update.transition().duration(75)
-                                .attr("d", arcGenerator)
-                                .attr("fill", d => stateColor(d.data.state) || colorScale(d.data.value)),
-                            exit => exit.remove()
-                        );
+                    g.selectAll('path')
+                        .data(pieData)
+                        .enter()
+                        .append('path')
+                        .attr('d', arcGenerator)
+                        .attr('fill', d => stateColor[d.data.state] || colorScale(d.data.value))
+                        .attr('stroke', '#1a202c')
+                        .attr('stroke-width', 1);
                 }, [data]);
 
                 return (
@@ -363,6 +432,7 @@
                 );
             };
             
+            // 정보 카드 컴포넌트
             const InfoCard = ({ algo, time }) => {
                 const content = infoContent[algo];
                 return (
@@ -381,76 +451,128 @@
                 );
             };
 
+            // 메인 앱 컴포넌트
             function App() {
                 const [data, setData] = useState([]);
                 const [algorithm, setAlgorithm] = useState('bubble');
                 const [isSorting, setIsSorting] = useState(false);
                 const [time, setTime] = useState(0);
                 
-                const animationTimeoutRef = useRef();
-                const timerRef = useRef();
+                const animationRef = useRef(null);
+                const timerRef = useRef(null);
+                const generatorRef = useRef(null);
 
+                // 초기 데이터 생성
                 const generateNewData = useCallback(() => {
-                    return d3.shuffle(d3.range(1, N + 1)).map((d, i) => ({ value: d, id: i, state: 'default' }));
+                    debugLog("새 데이터 생성");
+                    const newData = Array.from({ length: N }, (_, i) => ({
+                        value: i + 1,
+                        id: i,
+                        state: 'default'
+                    }));
+                    // 배열 섞기
+                    for (let i = newData.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [newData[i], newData[j]] = [newData[j], newData[i]];
+                    }
+                    return newData;
                 }, []);
 
+                // 컴포넌트 마운트 시 초기화
                 useEffect(() => {
+                    debugLog("앱 초기화");
                     setData(generateNewData());
                     
-                    // 파비콘 404 오류 방지
-                    const link = document.createElement('link');
-                    link.rel = 'icon';
-                    link.href = 'data:,'; // 빈 파비콘
-                    document.head.appendChild(link);
-                    
+                    // 컴포넌트 언마운트 시 정리
                     return () => {
-                        clearTimeout(animationTimeoutRef.current);
-                        clearInterval(timerRef.current);
+                        debugLog("앱 정리");
+                        clearAnimationFrame();
                     };
                 }, [generateNewData]);
+
+                // 애니메이션 프레임과 타이머 정리
+                const clearAnimationFrame = () => {
+                    if (animationRef.current) {
+                        clearTimeout(animationRef.current);
+                        animationRef.current = null;
+                    }
+                    if (timerRef.current) {
+                        clearInterval(timerRef.current);
+                        timerRef.current = null;
+                    }
+                };
                 
+                // 리셋 핸들러
                 const handleReset = useCallback(() => {
-                    clearTimeout(animationTimeoutRef.current);
-                    clearInterval(timerRef.current);
+                    debugLog("초기화 버튼 클릭");
+                    clearAnimationFrame();
                     setIsSorting(false);
                     setTime(0);
                     setData(generateNewData());
+                    generatorRef.current = null;
                 }, [generateNewData]);
                 
+                // 정렬 시작 핸들러
                 const handleStart = () => {
-                    if (isSorting) return;
+                    debugLog("시작 버튼 클릭");
+                    
+                    if (isSorting) {
+                        debugLog("이미 정렬 중입니다");
+                        return;
+                    }
+                    
+                    clearAnimationFrame();
+                    setIsSorting(true);
                     
                     try {
-                        const generator = sortGenerators[algorithm]([...data]);
-                        setIsSorting(true);
+                        // 제너레이터 함수 생성
+                        generatorRef.current = sortGenerators[algorithm]([...data]);
                         const startTime = performance.now();
-
+                        
+                        // 타이머 시작
                         timerRef.current = setInterval(() => {
                             setTime((performance.now() - startTime) / 1000);
                         }, 10);
-
-                        function animate() {
+                        
+                        // 애니메이션 함수
+                        const animate = () => {
                             try {
-                                const result = generator.next();
+                                const result = generatorRef.current.next();
+                                
                                 if (!result.done) {
                                     setData(result.value);
-                                    animationTimeoutRef.current = setTimeout(animate, 75);
+                                    animationRef.current = setTimeout(animate, 75);
                                 } else {
-                                    clearInterval(timerRef.current);
+                                    clearAnimationFrame();
                                     setIsSorting(false);
                                     setData(result.value);
+                                    debugLog("정렬 완료");
                                 }
                             } catch (error) {
-                                console.error("애니메이션 처리 중 오류:", error);
-                                clearInterval(timerRef.current);
+                                console.error("애니메이션 오류:", error);
+                                debugLog(`애니메이션 오류: ${error.message}`);
+                                clearAnimationFrame();
                                 setIsSorting(false);
                             }
-                        }
+                        };
+                        
+                        // 애니메이션 시작
                         animate();
+                        
                     } catch (error) {
-                        console.error("정렬 시작 중 오류:", error);
+                        console.error("정렬 시작 오류:", error);
+                        debugLog(`정렬 시작 오류: ${error.message}`);
+                        clearAnimationFrame();
                         setIsSorting(false);
                     }
+                };
+                
+                // 알고리즘 변경 핸들러
+                const handleAlgorithmChange = (algo) => {
+                    if (isSorting) return;
+                    debugLog(`알고리즘 변경: ${algo}`);
+                    setAlgorithm(algo);
+                    handleReset();
                 };
 
                 return (
@@ -466,11 +588,7 @@
                                     key={key}
                                     className={`algo-button ${algorithm === key ? 'active' : ''}`}
                                     disabled={isSorting}
-                                    onClick={() => {
-                                        if (isSorting) return;
-                                        setAlgorithm(key);
-                                        handleReset();
-                                    }}
+                                    onClick={() => handleAlgorithmChange(key)}
                                 >
                                     {infoContent[key].title}
                                 </button>
@@ -488,7 +606,7 @@
                                 onClick={handleStart} 
                                 disabled={isSorting}
                             >
-                                시작
+                                {isSorting ? '정렬 중...' : '시작'}
                             </button>
                             <button 
                                 className="button secondary-button" 
@@ -502,35 +620,46 @@
                 );
             }
 
-            const container = document.getElementById('root');
-            const root = createRoot(container);
-            root.render(<App />);
+            // ReactDOM.createRoot를 사용하여 렌더링
+            try {
+                const container = document.getElementById('root');
+                const root = ReactDOM.createRoot(container);
+                root.render(<App />);
+                debugLog("React 앱 렌더링 완료");
+            } catch (error) {
+                console.error("React 렌더링 오류:", error);
+                document.getElementById('root').innerHTML = `
+                    <div style="color: white; text-align: center; padding: 20px;">
+                        <h2>앱 렌더링 중 오류가 발생했습니다</h2>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
         }
         
-        // 라이브러리 로드 확인 및 오류 처리 개선
+        // 라이브러리 로드 확인
         let attempts = 0;
         const maxAttempts = 50;
         
         const readyCheck = setInterval(() => {
             attempts++;
             try {
-                // styled-components 의존성 제거
                 if (window.React && window.ReactDOM && window.ReactDOM.createRoot && window.d3) {
                     clearInterval(readyCheck);
                     console.log("라이브러리 로드 완료, 애플리케이션 시작");
-                    runWhenReady();
+                    runApp();
                 } else if (attempts >= maxAttempts) {
                     clearInterval(readyCheck);
-                    document.getElementById('root').innerHTML = 
-                        '<div style="color: white; text-align: center; padding: 20px;">' +
-                        '<h2>라이브러리 로드 중 오류가 발생했습니다.</h2>' +
-                        '<p>페이지를 새로고침하거나 다른 브라우저에서 시도해 주세요.</p>' +
-                        '<p>오류 상세: ' + 
-                        (window.React ? '✓' : '✗') + ' React, ' + 
-                        (window.ReactDOM ? '✓' : '✗') + ' ReactDOM, ' + 
-                        (window.ReactDOM && window.ReactDOM.createRoot ? '✓' : '✗') + ' createRoot, ' + 
-                        (window.d3 ? '✓' : '✗') + ' D3' + 
-                        '</p></div>';
+                    document.getElementById('root').innerHTML = `
+                        <div style="color: white; text-align: center; padding: 20px;">
+                            <h2>라이브러리 로드 중 오류가 발생했습니다</h2>
+                            <p>페이지를 새로고침하거나 다른 브라우저에서 시도해 주세요.</p>
+                            <p>로드 상태: React ${window.React ? '✓' : '✗'}, 
+                               ReactDOM ${window.ReactDOM ? '✓' : '✗'}, 
+                               createRoot ${window.ReactDOM && window.ReactDOM.createRoot ? '✓' : '✗'}, 
+                               D3 ${window.d3 ? '✓' : '✗'}</p>
+                        </div>
+                    `;
                 }
             } catch (error) {
                 console.error("라이브러리 체크 중 오류:", error);

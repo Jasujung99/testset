@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>수정 동굴의 분자화 (React)</title>
-    <!-- React, Babel, D3, Styled-components 로드 -->
+    <!-- React, Babel, D3 로드 -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://unpkg.com/styled-components@5.3.11/dist/styled-components.min.js"></script>
+    <!-- styled-components 버전 변경 및 로드 방식 수정 -->
+    <script src="https://unpkg.com/styled-components@5.3.6/dist/styled-components.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -33,7 +34,8 @@
         function runWhenReady() {
             const { useState, useEffect, useRef, useCallback } = React;
             const { createRoot } = ReactDOM;
-            const styled = window.styled;
+            // styled-components 접근 방식 수정
+            const styled = window.styled ? window.styled : window.styled.default;
 
             // --- Styled-components (CSS-in-JS) ---
             const AppWrapper = styled.div`
@@ -369,6 +371,17 @@
 
                 useEffect(() => {
                     setData(generateNewData());
+                    
+                    // 파비콘 404 오류 방지
+                    const link = document.createElement('link');
+                    link.rel = 'icon';
+                    link.href = 'data:,'; // 빈 파비콘
+                    document.head.appendChild(link);
+                    
+                    return () => {
+                        clearTimeout(animationTimeoutRef.current);
+                        clearInterval(timerRef.current);
+                    };
                 }, [generateNewData]);
                 
                 const handleReset = useCallback(() => {
@@ -382,26 +395,37 @@
                 const handleStart = () => {
                     if (isSorting) return;
                     
-                    const generator = sortGenerators[algorithm]([...data]);
-                    setIsSorting(true);
-                    const startTime = performance.now();
+                    try {
+                        const generator = sortGenerators[algorithm]([...data]);
+                        setIsSorting(true);
+                        const startTime = performance.now();
 
-                    timerRef.current = setInterval(() => {
-                        setTime((performance.now() - startTime) / 1000);
-                    }, 10);
+                        timerRef.current = setInterval(() => {
+                            setTime((performance.now() - startTime) / 1000);
+                        }, 10);
 
-                    function animate() {
-                        const result = generator.next();
-                        if (!result.done) {
-                            setData(result.value);
-                            animationTimeoutRef.current = setTimeout(animate, 75);
-                        } else {
-                            clearInterval(timerRef.current);
-                            setIsSorting(false);
-                            setData(result.value);
+                        function animate() {
+                            try {
+                                const result = generator.next();
+                                if (!result.done) {
+                                    setData(result.value);
+                                    animationTimeoutRef.current = setTimeout(animate, 75);
+                                } else {
+                                    clearInterval(timerRef.current);
+                                    setIsSorting(false);
+                                    setData(result.value);
+                                }
+                            } catch (error) {
+                                console.error("애니메이션 처리 중 오류:", error);
+                                clearInterval(timerRef.current);
+                                setIsSorting(false);
+                            }
                         }
+                        animate();
+                    } catch (error) {
+                        console.error("정렬 시작 중 오류:", error);
+                        setIsSorting(false);
                     }
-                    animate();
                 };
 
                 return (
@@ -447,11 +471,33 @@
         }
         
         // --- 오류 수정의 핵심 부분 ---
-        // 모든 라이브러리가 로드되었는지 주기적으로 확인
+        // 라이브러리 로드 확인 및 오류 처리
+        let attempts = 0;
+        const maxAttempts = 50;
+        
         const readyCheck = setInterval(() => {
-            if (window.React && window.ReactDOM && window.ReactDOM.createRoot && window.Babel && window.d3 && window.styled) {
+            attempts++;
+            try {
+                if (
+                    window.React && 
+                    window.ReactDOM && 
+                    window.ReactDOM.createRoot && 
+                    window.d3 && 
+                    (window.styled || (window.styled && window.styled.default))
+                ) {
+                    clearInterval(readyCheck);
+                    runWhenReady();
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(readyCheck);
+                    document.getElementById('root').innerHTML = 
+                        '<div style="color: white; text-align: center; padding: 20px;">' +
+                        '<h2>라이브러리 로드 중 오류가 발생했습니다.</h2>' +
+                        '<p>페이지를 새로고침하거나 다른 브라우저에서 시도해 주세요.</p>' +
+                        '</div>';
+                }
+            } catch (error) {
+                console.error("라이브러리 체크 중 오류:", error);
                 clearInterval(readyCheck);
-                runWhenReady();
             }
         }, 100);
     </script>
